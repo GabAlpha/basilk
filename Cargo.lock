@@ -33,6 +33,7 @@ dependencies = [
  "ratatui",
  "serde",
  "serde_json",
+ "tui-input",
 ]
 
 [[package]]
@@ -402,6 +403,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "tui-input"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b02e86628a225c39b2602863f244a01668184149928ceb410e47a8022d7597e"
+dependencies = [
+ "crossterm",
+ "unicode-width",
 ]
 
 [[package]]

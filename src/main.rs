@@ -1,30 +1,14 @@
-//! # [Ratatui] Scrollbar example
-//!
-//! The latest version of this example is available in the [examples] folder in the repository.
-//!
-//! Please note that the examples are designed to be run against the `main` branch of the Github
-//! repository. This means that you may not be able to compile with the latest release version on
-//! crates.io, or the one that you have installed locally.
-//!
-//! See the [examples readme] for more information on finding examples that match the version of the
-//! library you are using.
-//!
-//! [Ratatui]: https://github.com/ratatui-org/ratatui
-//! [examples]: https://github.com/ratatui-org/ratatui/blob/main/examples
-//! [examples readme]: https://github.com/ratatui-org/ratatui/blob/main/examples/README.md
-
-#![warn(clippy::pedantic)]
-#![allow(clippy::wildcard_imports)]
-
 use std::{
-    error::Error, io, process::exit, time::{Duration, Instant}, fs, str
+    error::Error,
+    fs,
+    io::{self, stdout},
 };
 
 use ratatui::{
     crossterm::{
-        event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
-        execute,
+        event::{self, Event, KeyCode, KeyEventKind},
         terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+        ExecutableCommand,
     },
     prelude::*,
     widgets::*,
@@ -33,196 +17,212 @@ use serde::{Deserialize, Serialize};
 use serde_json::from_str;
 
 #[derive(Default, PartialEq)]
-enum Mode {
+enum ViewMode {
     #[default]
     Project,
-    Tasks
+    Tasks,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 struct Task {
     title: String,
-    status: String
+    status: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 struct Project {
     title: String,
-    tasks: Vec<Task>
+    tasks: Vec<Task>,
 }
 
-#[derive(Default)]
 struct App {
-    pub vertical_scroll_state: ScrollbarState,
-    pub vertical_scroll: usize,
-    pub index_selected: usize,
-    pub mode: Mode
+    state: ListState,
+    view_mode: ViewMode,
+    selected_project_name: Option<String>,
+}
+
+fn init_terminal() -> Result<Terminal<impl Backend>, Box<dyn Error>> {
+    enable_raw_mode()?;
+    stdout().execute(EnterAlternateScreen)?;
+    let backend = CrosstermBackend::new(stdout());
+    let terminal = Terminal::new(backend)?;
+    Ok(terminal)
+}
+
+fn restore_terminal() -> Result<(), Box<dyn Error>> {
+    disable_raw_mode()?;
+    stdout().execute(LeaveAlternateScreen)?;
+    Ok(())
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
-    enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
-    let backend: CrosstermBackend<io::Stdout> = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
-
-    let json = fs::read_to_string("main.json").unwrap();
-    let projects = from_str::<Vec<Project>>(&json).unwrap();
+    let terminal = init_terminal()?;
 
     // create app and run it
-    let tick_rate = Duration::from_millis(250);
-    let app = App::default();
-    let res = run_app(&mut terminal, app, projects, tick_rate);
+    App::setup().run(terminal)?;
 
-    // restore terminal
-    disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
-    terminal.show_cursor()?;
-
-    if let Err(err) = res {
-        println!("{err:?}");
-        exit(1)
-    }
+    restore_terminal()?;
 
     Ok(())
 }
 
-fn read_projects(text: &mut Vec<Line>, projects: &Vec<Project>, app: &mut App){
-    for project in projects.iter() {
-        text.push(Line::from(project.title.clone()))
+impl App {
+    fn setup() -> Self {
+        Self {
+            selected_project_name: None,
+            state: ListState::default(),
+            view_mode: ViewMode::default(),
+        }
     }
-    app.mode = Mode::Project
-}
 
-fn get_task_status_color (status: &String) -> ratatui::prelude::Color{
-    match status.as_str() {
-        "Done" => return Color::Green,
-        "OnGoing" => return Color::Yellow,
-        "UpNext" => return Color::Blue,
-        _ => return Color::Gray
+    fn load_projects(&mut self, items: &mut Vec<ListItem>, projects: &Vec<Project>) {
+        items.clear();
+        self.reset_state();
+
+        for project in projects.iter() {
+            items.push(ListItem::from(project.title.clone()))
+        }
+
+        self.view_mode = ViewMode::Project
     }
-}
 
-fn read_tasks(text: &mut Vec<Line>, tasks: &Vec<Task>, app: &mut App){
-    for task in tasks.iter() {
-        let color = get_task_status_color(&task.status);
-        text.push(Line::from(vec![Span::styled(format!("[{}] ", task.status), Style::new().fg(color)), Span::raw(task.title.clone())]))
-    }
-    app.mode = Mode::Tasks
-}
+    fn load_tasks(&mut self, items: &mut Vec<ListItem>, tasks: &Vec<Task>) {
+        items.clear();
+        self.reset_state();
 
-
-fn run_app<B: Backend>(
-    terminal: &mut Terminal<B>,
-    mut app: App,
-    projects: Vec<Project>,
-    tick_rate: Duration,
-) -> io::Result<()> {
-    let mut last_tick = Instant::now();
-
-    let mut text: Vec<Line> = vec![];
-
-    read_projects(&mut text, &projects, &mut app);
-
-    loop {
-        terminal.draw(|f| ui(f, &mut app, &mut text))?;
-
-        let timeout = tick_rate.saturating_sub(last_tick.elapsed());
-        if event::poll(timeout)? {
-            if let Event::Key(key) = event::read()? {
-                match key.code {
-                    KeyCode::Char('q') => return Ok(()),
-                    KeyCode::Enter => {
-                        if Mode::Project == app.mode {
-                            let tasks = &projects[app.index_selected].tasks;
-                            
-                            app.index_selected = 0;
-                            app.vertical_scroll = 0;
-    
-                            text.clear();
-                            read_tasks(&mut text, &tasks, &mut app)
-                        }
-                    },
-                    KeyCode::Esc => {
-                        app.index_selected = 0;
-                        app.vertical_scroll = 0;
-
-                        text.clear(); 
-                        read_projects(&mut text, &projects, &mut app);
-                    },
-                    KeyCode::Down => {
-                        if app.index_selected + 1 < text.len() {
-                            app.index_selected = app.index_selected + 1;
-
-                            // app.vertical_scroll = app.vertical_scroll.saturating_add(1);
-                            // app.vertical_scroll_state = app.vertical_scroll_state.position(app.vertical_scroll);
-                                
-                        }
-                        
-                    }
-                     KeyCode::Up => {
-                        if app.index_selected != 0 {
-                            app.index_selected = app.index_selected - 1;
-
-                            app.vertical_scroll = app.vertical_scroll.saturating_sub(1);
-                            app.vertical_scroll_state = app.vertical_scroll_state.position(app.vertical_scroll);
-                        }
-                    }
-                    _ => {}
-                }
+        fn get_task_status_color(status: &String) -> ratatui::prelude::Color {
+            match status.as_str() {
+                "Done" => return Color::Green,
+                "OnGoing" => return Color::Yellow,
+                "UpNext" => return Color::Blue,
+                _ => return Color::Gray,
             }
         }
 
-        if last_tick.elapsed() >= tick_rate {
-            last_tick = Instant::now();
+        for task in tasks.iter() {
+            let line = Line::from(vec![
+                Span::styled(
+                    format!("[{}] ", task.status),
+                    Style::new().fg(get_task_status_color(&task.status)),
+                ),
+                Span::raw(task.title.clone()),
+            ]);
+
+            items.push(ListItem::from(line))
+        }
+
+        self.view_mode = ViewMode::Tasks
+    }
+
+    fn run(&mut self, mut terminal: Terminal<impl Backend>) -> io::Result<()> {
+        let json = fs::read_to_string("main2.json").unwrap();
+        let projects = from_str::<Vec<Project>>(&json).unwrap();
+
+        let mut items: Vec<ListItem> = vec![];
+
+        self.load_projects(&mut items, &projects);
+        self.reset_state();
+
+        loop {
+            terminal.draw(|f| self.render(f, f.size(), &items))?;
+
+            if let Event::Key(key) = event::read()? {
+                if key.kind == KeyEventKind::Press {
+                    use KeyCode::*;
+                    match key.code {
+                        Char('q') => return Ok(()),
+                        Down => self.next(&items),
+                        Up => self.previous(&items),
+                        Esc | Left => {
+                            if self.view_mode == ViewMode::Tasks {
+                                self.selected_project_name = None;
+                                self.load_projects(&mut items, &projects)
+                            }
+                        }
+                        Enter | Right => {
+                            if self.view_mode == ViewMode::Project {
+                                let tasks = &projects[self.state.selected().unwrap()].tasks;
+                                self.selected_project_name =
+                                    Some(projects[self.state.selected().unwrap()].title.clone());
+
+                                self.load_tasks(&mut items, &tasks)
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
         }
     }
-}
 
-#[allow(clippy::too_many_lines, clippy::cast_possible_truncation)]
-fn ui(f: &mut Frame, app: &mut App, text: &mut Vec<Line>) {
+    fn render(&mut self, f: &mut Frame, area: Rect, items: &Vec<ListItem>) {
+        // Create a space for header, todo list and the footer.
+        let vertical = Layout::vertical([
+            Constraint::Min(5),
+            Constraint::Percentage(80),
+            Constraint::Min(5),
+        ]);
+        let [header_area, rest_area, footer_area] = vertical.areas(area);
 
-    let size = f.size();
+        // Iterate through all elements in the `items` and stylize them.
+        let items = items.clone();
 
-    let mut internal_text = text.clone();
+        // Create a List from all list items and highlight the currently selected one
+        let mut items = List::new(items)
+            .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+            .highlight_symbol("> ")
+            .highlight_spacing(HighlightSpacing::Always);
 
-    let chunks = Layout::vertical([
-        Constraint::Min(1),
-        Constraint::Percentage(80), 
-        Constraint::Min(1),
-    ])
-    .split(size);
+        if self.selected_project_name.is_some() {
+            items = items.block(
+                Block::bordered()
+                    .gray()
+                    .title(self.selected_project_name.clone().unwrap().bold()),
+            )
+        } else {
+            items = items.block(Block::bordered().gray())
+        }
 
+        let footer = Paragraph::new("Lorem").block(Block::bordered().gray());
 
-    app.vertical_scroll_state = app.vertical_scroll_state.content_length(internal_text.len());
+        // We can now render the item list
+        // (look careful we are using StatefulWidget's render.)
+        // ratatui::widgets::StatefulWidget::render as stateful_render
+        f.render_stateful_widget(items, rest_area, &mut self.state);
+        f.render_widget(footer, footer_area);
+        f.render_widget(Block::bordered().gray(), header_area);
+    }
 
-    let create_block = |title: &'static str| Block::bordered().gray().title(title.bold());
+    fn next(&mut self, items: &Vec<ListItem>) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i >= items.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i))
+    }
 
-    let title = Block::new()
-        .title_alignment(Alignment::Center)
-        .title("title".bold());
-    f.render_widget(title, chunks[0]);
+    fn previous(&mut self, items: &Vec<ListItem>) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    items.len() - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i))
+    }
 
-    (internal_text)[app.index_selected] = (internal_text)[app.index_selected].clone().on_dark_gray();
-
-    let paragraph = Paragraph::new(internal_text.clone())
-        .gray()
-        .block(create_block("Vertical scrollbar with arrows"))
-        .scroll((app.vertical_scroll as u16, 0));
-
-    f.render_widget(paragraph, chunks[1]);
-    f.render_widget(Paragraph::new(format!("{} - {}", app.vertical_scroll.to_string(), chunks[2].rows().current_row)), chunks[2]);
-
-    f.render_stateful_widget(
-        Scrollbar::new(ScrollbarOrientation::VerticalRight)
-            .begin_symbol(Some("↑"))
-            .end_symbol(Some("↓")),
-        chunks[1],
-        &mut app.vertical_scroll_state,
-    );
+    fn reset_state(&mut self) {
+        self.state.select(Some(0))
+    }
 }
