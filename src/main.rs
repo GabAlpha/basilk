@@ -6,7 +6,7 @@ use std::{
 
 use ratatui::{
     crossterm::{
-        event::{self, Event, KeyCode, KeyEventKind},
+        event::{self, Event, KeyCode},
         terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
         ExecutableCommand,
     },
@@ -21,6 +21,7 @@ enum ViewMode {
     #[default]
     Project,
     Tasks,
+    EditTask,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -36,7 +37,8 @@ struct Project {
 }
 
 struct App {
-    state: ListState,
+    selected_project_index: ListState,
+    selected_task_index: ListState,
     view_mode: ViewMode,
     selected_project_name: Option<String>,
 }
@@ -71,14 +73,19 @@ impl App {
     fn setup() -> Self {
         Self {
             selected_project_name: None,
-            state: ListState::default(),
+            selected_project_index: ListState::default().with_selected(Some(0)),
+            selected_task_index: ListState::default().with_selected(Some(0)),
             view_mode: ViewMode::default(),
         }
     }
 
+    fn read_json() -> Vec<Project> {
+        let json = fs::read_to_string("main2.json").unwrap();
+        return from_str::<Vec<Project>>(&json).unwrap();
+    }
+
     fn load_projects(&mut self, items: &mut Vec<ListItem>, projects: &Vec<Project>) {
         items.clear();
-        self.reset_state();
 
         for project in projects.iter() {
             items.push(ListItem::from(project.title.clone()))
@@ -89,7 +96,6 @@ impl App {
 
     fn load_tasks(&mut self, items: &mut Vec<ListItem>, tasks: &Vec<Task>) {
         items.clear();
-        self.reset_state();
 
         fn get_task_status_color(status: &String) -> ratatui::prelude::Color {
             match status.as_str() {
@@ -116,41 +122,57 @@ impl App {
     }
 
     fn run(&mut self, mut terminal: Terminal<impl Backend>) -> io::Result<()> {
-        let json = fs::read_to_string("main2.json").unwrap();
-        let projects = from_str::<Vec<Project>>(&json).unwrap();
-
         let mut items: Vec<ListItem> = vec![];
+        let projects = App::read_json();
 
         self.load_projects(&mut items, &projects);
-        self.reset_state();
 
         loop {
             terminal.draw(|f| self.render(f, f.size(), &items))?;
 
             if let Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Press {
-                    use KeyCode::*;
-                    match key.code {
-                        Char('q') => return Ok(()),
-                        Down => self.next(&items),
-                        Up => self.previous(&items),
+                use KeyCode::*;
+                match self.view_mode {
+                    ViewMode::Tasks => match key.code {
                         Esc | Left => {
-                            if self.view_mode == ViewMode::Tasks {
-                                self.selected_project_name = None;
-                                self.load_projects(&mut items, &projects)
-                            }
+                            self.selected_project_name = None;
+                            self.load_projects(&mut items, &projects)
                         }
+                        Enter => self.view_mode = ViewMode::EditTask,
+                        _ => match key.code {
+                            Char('q') => return Ok(()),
+                            Down => self.next(&items),
+                            Up => self.previous(&items),
+                            _ => {}
+                        },
+                    },
+                    ViewMode::EditTask => match key.code {
+                        Enter => self.view_mode = ViewMode::Tasks,
+                        _ => match key.code {
+                            Char('q') => return Ok(()),
+                            _ => {}
+                        },
+                    },
+                    ViewMode::Project => match key.code {
                         Enter | Right => {
-                            if self.view_mode == ViewMode::Project {
-                                let tasks = &projects[self.state.selected().unwrap()].tasks;
-                                self.selected_project_name =
-                                    Some(projects[self.state.selected().unwrap()].title.clone());
+                            let tasks =
+                                &projects[self.selected_project_index.selected().unwrap()].tasks;
+                            self.selected_project_name = Some(
+                                projects[self.selected_project_index.selected().unwrap()]
+                                    .title
+                                    .clone(),
+                            );
 
-                                self.load_tasks(&mut items, &tasks)
-                            }
+                            self.load_tasks(&mut items, &tasks);
+                            self.selected_task_index.select(Some(0))
                         }
-                        _ => {}
-                    }
+                        _ => match key.code {
+                            Char('q') => return Ok(()),
+                            Down => self.next(&items),
+                            Up => self.previous(&items),
+                            _ => {}
+                        },
+                    },
                 }
             }
         }
@@ -184,18 +206,19 @@ impl App {
             items = items.block(Block::bordered().gray())
         }
 
-        let footer = Paragraph::new("Lorem").block(Block::bordered().gray());
+        let footer = Paragraph::new(self.selected_task_index.selected().unwrap().to_string())
+            .block(Block::bordered().gray());
 
         // We can now render the item list
         // (look careful we are using StatefulWidget's render.)
         // ratatui::widgets::StatefulWidget::render as stateful_render
-        f.render_stateful_widget(items, rest_area, &mut self.state);
+        f.render_stateful_widget(items, rest_area, self.use_state());
         f.render_widget(footer, footer_area);
         f.render_widget(Block::bordered().gray(), header_area);
     }
 
     fn next(&mut self, items: &Vec<ListItem>) {
-        let i = match self.state.selected() {
+        let i = match self.use_state().selected() {
             Some(i) => {
                 if i >= items.len() - 1 {
                     0
@@ -205,11 +228,11 @@ impl App {
             }
             None => 0,
         };
-        self.state.select(Some(i))
+        self.use_state().select(Some(i))
     }
 
     fn previous(&mut self, items: &Vec<ListItem>) {
-        let i = match self.state.selected() {
+        let i = match self.use_state().selected() {
             Some(i) => {
                 if i == 0 {
                     items.len() - 1
@@ -219,10 +242,15 @@ impl App {
             }
             None => 0,
         };
-        self.state.select(Some(i))
+        self.use_state().select(Some(i))
     }
 
-    fn reset_state(&mut self) {
-        self.state.select(Some(0))
+    fn use_state(&mut self) -> &mut ListState {
+        match self.view_mode {
+            ViewMode::Project => return &mut self.selected_project_index,
+            ViewMode::Tasks => return &mut self.selected_task_index,
+            // Show the task selected index state
+            ViewMode::EditTask => return &mut self.selected_task_index,
+        };
     }
 }
