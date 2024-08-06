@@ -17,6 +17,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{from_str, to_string};
 use tui_input::{backend::crossterm::EventHandler, Input};
 
+static PATH_JSON: &'static str = "main2.json";
+
 #[derive(Default, PartialEq)]
 enum ViewMode {
     #[default]
@@ -81,7 +83,7 @@ impl App {
     }
 
     fn read_json() -> Vec<Project> {
-        let json = fs::read_to_string("main2.json").unwrap();
+        let json = fs::read_to_string(PATH_JSON).unwrap();
         return from_str::<Vec<Project>>(&json).unwrap();
     }
 
@@ -129,7 +131,7 @@ impl App {
             [self.selected_task_index.selected().unwrap()]
         .title = value.to_string();
 
-        fs::write("main2.json", to_string(&internal_projects).unwrap()).unwrap()
+        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap()
     }
 
     fn run(&mut self, mut terminal: Terminal<impl Backend>) -> io::Result<()> {
