@@ -69,6 +69,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
+    let mut gianni = Input::default();
+
     loop {
         terminal.draw(|f| ui(f, &app))?;
 
@@ -92,7 +94,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
                         app.input_mode = InputMode::Normal;
                     }
                     _ => {
-                        app.input.handle_event(&Event::Key(key));
+                        gianni.handle_event(&Event::Key(key));
                     }
                 },
             }
@@ -143,6 +145,7 @@ fn ui(f: &mut Frame, app: &App) {
     let width = chunks[0].width.max(3) - 3; // keep 2 for borders and 1 for cursor
 
     let scroll = app.input.visual_scroll(width as usize);
+    app.input.with_value("Pippo".to_string());
     let input = Paragraph::new(app.input.value())
         .style(match app.input_mode {
             InputMode::Normal => Style::default(),

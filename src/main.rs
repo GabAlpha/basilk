@@ -14,7 +14,8 @@ use ratatui::{
     widgets::*,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::from_str;
+use serde_json::{from_str, to_string};
+use tui_input::{backend::crossterm::EventHandler, Input};
 
 #[derive(Default, PartialEq)]
 enum ViewMode {
@@ -24,13 +25,13 @@ enum ViewMode {
     EditTask,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 struct Task {
     title: String,
     status: String,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 struct Project {
     title: String,
     tasks: Vec<Task>,
@@ -121,14 +122,25 @@ impl App {
         self.view_mode = ViewMode::Tasks
     }
 
+    fn rename_task(&mut self, projects: &Vec<Project>, value: &str) {
+        let mut internal_projects = projects.clone();
+
+        internal_projects[self.selected_project_index.selected().unwrap()].tasks
+            [self.selected_task_index.selected().unwrap()]
+        .title = value.to_string();
+
+        fs::write("main2.json", to_string(&internal_projects).unwrap()).unwrap()
+    }
+
     fn run(&mut self, mut terminal: Terminal<impl Backend>) -> io::Result<()> {
-        let mut items: Vec<ListItem> = vec![];
         let projects = App::read_json();
+        let mut items: Vec<ListItem> = vec![];
+        let mut input = Input::default();
 
         self.load_projects(&mut items, &projects);
 
         loop {
-            terminal.draw(|f| self.render(f, f.size(), &items))?;
+            terminal.draw(|f| self.render(f, f.size(), &items, &input))?;
 
             if let Event::Key(key) = event::read()? {
                 use KeyCode::*;
@@ -138,20 +150,31 @@ impl App {
                             self.selected_project_name = None;
                             self.load_projects(&mut items, &projects)
                         }
-                        Enter => self.view_mode = ViewMode::EditTask,
-                        _ => match key.code {
-                            Char('q') => return Ok(()),
-                            Down => self.next(&items),
-                            Up => self.previous(&items),
-                            _ => {}
-                        },
+                        Char('r') => {
+                            let current_task = &projects
+                                [self.selected_project_index.selected().unwrap()]
+                            .tasks[self.selected_task_index.selected().unwrap()];
+
+                            input = input.clone().with_value(current_task.title.clone());
+
+                            self.view_mode = ViewMode::EditTask
+                        }
+                        Char('q') => return Ok(()),
+                        Down => self.next(&items),
+                        Up => self.previous(&items),
+                        _ => {}
                     },
                     ViewMode::EditTask => match key.code {
-                        Enter => self.view_mode = ViewMode::Tasks,
-                        _ => match key.code {
-                            Char('q') => return Ok(()),
-                            _ => {}
-                        },
+                        Enter => {
+                            self.rename_task(&projects, input.value());
+
+                            self.view_mode = ViewMode::Tasks;
+                            input.reset()
+                        }
+                        Char('q') => return Ok(()),
+                        _ => {
+                            input.handle_event(&Event::Key(key));
+                        }
                     },
                     ViewMode::Project => match key.code {
                         Enter | Right => {
@@ -166,19 +189,17 @@ impl App {
                             self.load_tasks(&mut items, &tasks);
                             self.selected_task_index.select(Some(0))
                         }
-                        _ => match key.code {
-                            Char('q') => return Ok(()),
-                            Down => self.next(&items),
-                            Up => self.previous(&items),
-                            _ => {}
-                        },
+                        Char('q') => return Ok(()),
+                        Down => self.next(&items),
+                        Up => self.previous(&items),
+                        _ => {}
                     },
                 }
             }
         }
     }
 
-    fn render(&mut self, f: &mut Frame, area: Rect, items: &Vec<ListItem>) {
+    fn render(&mut self, f: &mut Frame, area: Rect, items: &Vec<ListItem>, input: &Input) {
         // Create a space for header, todo list and the footer.
         let vertical = Layout::vertical([
             Constraint::Min(5),
@@ -191,28 +212,43 @@ impl App {
             fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
                 let popup_layout = Layout::vertical([
                     Constraint::Percentage((100 - percent_y) / 2),
-                    Constraint::Percentage(percent_y),
+                    Constraint::Min(percent_y),
                     Constraint::Percentage((100 - percent_y) / 2),
                 ])
                 .split(r);
 
                 Layout::horizontal([
                     Constraint::Percentage((100 - percent_x) / 2),
-                    Constraint::Percentage(percent_x),
+                    Constraint::Min(percent_x),
                     Constraint::Percentage((100 - percent_x) / 2),
                 ])
                 .split(popup_layout[1])[1]
             }
 
-            let projects = App::read_json();
-            let current_task = &projects[self.selected_project_index.selected().unwrap()].tasks
-                [self.selected_task_index.selected().unwrap()];
+            let area = centered_rect(50, 3, rest_area);
 
-            let block =
-                Paragraph::new(format!("{:?}", current_task)).block(Block::bordered().gray());
-            let area = centered_rect(60, 20, rest_area);
+            let width = area.width.max(3) - 3;
+            let scroll = input.visual_scroll(width as usize);
+
+            let input_to_show = Paragraph::new(input.value())
+                .block(Block::default().borders(Borders::ALL).title("Rename"))
+                .scroll((0, scroll as u16));
+
             f.render_widget(Clear, area); //this clears out the background
-            f.render_widget(block, area);
+            f.render_widget(input_to_show, area);
+
+            match self.view_mode {
+                ViewMode::EditTask => {
+                    // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
+                    f.set_cursor(
+                        // Put cursor past the end of the input text
+                        area.x + ((input.visual_cursor()).max(scroll) - scroll) as u16 + 1,
+                        // Move one line down, from the border to the input line
+                        area.y + 1,
+                    )
+                }
+                _ => {}
+            }
         }
 
         // Iterate through all elements in the `items` and stylize them.
