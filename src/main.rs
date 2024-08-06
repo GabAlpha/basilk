@@ -187,6 +187,34 @@ impl App {
         ]);
         let [header_area, rest_area, footer_area] = vertical.areas(area);
 
+        if self.view_mode == ViewMode::EditTask {
+            fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+                let popup_layout = Layout::vertical([
+                    Constraint::Percentage((100 - percent_y) / 2),
+                    Constraint::Percentage(percent_y),
+                    Constraint::Percentage((100 - percent_y) / 2),
+                ])
+                .split(r);
+
+                Layout::horizontal([
+                    Constraint::Percentage((100 - percent_x) / 2),
+                    Constraint::Percentage(percent_x),
+                    Constraint::Percentage((100 - percent_x) / 2),
+                ])
+                .split(popup_layout[1])[1]
+            }
+
+            let projects = App::read_json();
+            let current_task = &projects[self.selected_project_index.selected().unwrap()].tasks
+                [self.selected_task_index.selected().unwrap()];
+
+            let block =
+                Paragraph::new(format!("{:?}", current_task)).block(Block::bordered().gray());
+            let area = centered_rect(60, 20, rest_area);
+            f.render_widget(Clear, area); //this clears out the background
+            f.render_widget(block, area);
+        }
+
         // Iterate through all elements in the `items` and stylize them.
         let items = items.clone();
 
