@@ -25,6 +25,7 @@ enum ViewMode {
     Project,
     Tasks,
     EditTask,
+    EditProject,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -141,6 +142,18 @@ impl App {
         self.load_tasks(items)
     }
 
+    fn rename_project(&mut self, items: &mut Vec<ListItem>, value: &str) {
+        let mut internal_projects = self.projects.clone();
+
+        internal_projects[self.selected_project_index.selected().unwrap()].title =
+            value.to_string();
+
+        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
+
+        self.projects = App::read_json();
+        self.load_projects(items)
+    }
+
     fn run(&mut self, mut terminal: Terminal<impl Backend>) -> io::Result<()> {
         let mut items: Vec<ListItem> = vec![];
         let mut input = Input::default();
@@ -195,10 +208,34 @@ impl App {
                             self.load_tasks(&mut items);
                             self.selected_task_index.select(Some(0))
                         }
+                        Char('r') => {
+                            let current_project =
+                                &self.projects[self.selected_project_index.selected().unwrap()];
+
+                            input = input.clone().with_value(current_project.title.clone());
+
+                            self.view_mode = ViewMode::EditProject
+                        }
                         Char('q') => return Ok(()),
                         Down => self.next(&items),
                         Up => self.previous(&items),
                         _ => {}
+                    },
+                    ViewMode::EditProject => match key.code {
+                        Enter => {
+                            self.rename_project(&mut items, input.value());
+
+                            self.view_mode = ViewMode::Project;
+                            input.reset()
+                        }
+                        Esc => {
+                            self.view_mode = ViewMode::Project;
+                            input.reset()
+                        }
+                        Char('q') => return Ok(()),
+                        _ => {
+                            input.handle_event(&Event::Key(key));
+                        }
                     },
                 }
             }
@@ -214,7 +251,7 @@ impl App {
         ]);
         let [header_area, rest_area, footer_area] = vertical.areas(area);
 
-        if self.view_mode == ViewMode::EditTask {
+        if self.view_mode == ViewMode::EditTask || self.view_mode == ViewMode::EditProject {
             fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
                 let popup_layout = Layout::vertical([
                     Constraint::Percentage((100 - percent_y) / 2),
@@ -318,8 +355,8 @@ impl App {
     fn use_state(&mut self) -> &mut ListState {
         match self.view_mode {
             ViewMode::Project => return &mut self.selected_project_index,
+            ViewMode::EditProject => return &mut self.selected_project_index,
             ViewMode::Tasks => return &mut self.selected_task_index,
-            // Show the task selected index state
             ViewMode::EditTask => return &mut self.selected_task_index,
         };
     }
