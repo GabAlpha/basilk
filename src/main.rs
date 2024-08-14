@@ -17,6 +17,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::{from_str, to_string};
 use tui_input::{backend::crossterm::EventHandler, Input};
 
+mod ui;
+
+use ui::Ui;
+
 static PATH_JSON: &'static str = "main2.json";
 
 #[derive(Default, PartialEq)]
@@ -40,7 +44,7 @@ struct Project {
     tasks: Vec<Task>,
 }
 
-struct App {
+pub struct App {
     selected_project_index: ListState,
     selected_task_index: ListState,
     view_mode: ViewMode,
@@ -256,46 +260,7 @@ impl App {
         let [header_area, rest_area, footer_area] = vertical.areas(area);
 
         if self.view_mode == ViewMode::EditTask || self.view_mode == ViewMode::EditProject {
-            fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
-                let popup_layout = Layout::vertical([
-                    Constraint::Percentage((100 - percent_y) / 2),
-                    Constraint::Min(percent_y),
-                    Constraint::Percentage((100 - percent_y) / 2),
-                ])
-                .split(r);
-
-                Layout::horizontal([
-                    Constraint::Percentage((100 - percent_x) / 2),
-                    Constraint::Min(percent_x),
-                    Constraint::Percentage((100 - percent_x) / 2),
-                ])
-                .split(popup_layout[1])[1]
-            }
-
-            let area = centered_rect(50, 3, rest_area);
-
-            let width = area.width.max(3) - 3;
-            let scroll = input.visual_scroll(width as usize);
-
-            let input_to_show = Paragraph::new(input.value())
-                .block(Block::default().borders(Borders::ALL).title("Rename"))
-                .scroll((0, scroll as u16));
-
-            f.render_widget(Clear, area); //this clears out the background
-            f.render_widget(input_to_show, area);
-
-            match self.view_mode {
-                ViewMode::EditTask => {
-                    // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
-                    f.set_cursor(
-                        // Put cursor past the end of the input text
-                        area.x + ((input.visual_cursor()).max(scroll) - scroll) as u16 + 1,
-                        // Move one line down, from the border to the input line
-                        area.y + 1,
-                    )
-                }
-                _ => {}
-            }
+            Ui::create_input("Rename", f, area, input)
         }
 
         // Iterate through all elements in the `items` and stylize them.
