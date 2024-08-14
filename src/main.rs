@@ -192,6 +192,10 @@ impl App {
                             self.view_mode = ViewMode::Tasks;
                             input.reset()
                         }
+                        Esc => {
+                            self.view_mode = ViewMode::Tasks;
+                            input.reset()
+                        }
                         Char('q') => return Ok(()),
                         _ => {
                             input.handle_event(&Event::Key(key));
