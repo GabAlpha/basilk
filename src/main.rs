@@ -44,6 +44,7 @@ struct App {
     selected_task_index: ListState,
     view_mode: ViewMode,
     selected_project_name: Option<String>,
+    projects: Vec<Project>,
 }
 
 fn init_terminal() -> Result<Terminal<impl Backend>, Box<dyn Error>> {
@@ -79,6 +80,7 @@ impl App {
             selected_project_index: ListState::default().with_selected(Some(0)),
             selected_task_index: ListState::default().with_selected(Some(0)),
             view_mode: ViewMode::default(),
+            projects: App::read_json(),
         }
     }
 
@@ -87,17 +89,19 @@ impl App {
         return from_str::<Vec<Project>>(&json).unwrap();
     }
 
-    fn load_projects(&mut self, items: &mut Vec<ListItem>, projects: &Vec<Project>) {
+    fn load_projects(&mut self, items: &mut Vec<ListItem>) {
         items.clear();
 
-        for project in projects.iter() {
+        for project in self.projects.iter() {
             items.push(ListItem::from(project.title.clone()))
         }
 
         self.view_mode = ViewMode::Project
     }
 
-    fn load_tasks(&mut self, items: &mut Vec<ListItem>, tasks: &Vec<Task>) {
+    fn load_tasks(&mut self, items: &mut Vec<ListItem>) {
+        let tasks = &self.projects[self.selected_project_index.selected().unwrap()].tasks;
+
         items.clear();
 
         fn get_task_status_color(status: &String) -> ratatui::prelude::Color {
@@ -124,22 +128,24 @@ impl App {
         self.view_mode = ViewMode::Tasks
     }
 
-    fn rename_task(&mut self, projects: &Vec<Project>, value: &str) {
-        let mut internal_projects = projects.clone();
+    fn rename_task(&mut self, items: &mut Vec<ListItem>, value: &str) {
+        let mut internal_projects = self.projects.clone();
 
         internal_projects[self.selected_project_index.selected().unwrap()].tasks
             [self.selected_task_index.selected().unwrap()]
         .title = value.to_string();
 
-        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap()
+        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
+
+        self.projects = App::read_json();
+        self.load_tasks(items)
     }
 
     fn run(&mut self, mut terminal: Terminal<impl Backend>) -> io::Result<()> {
-        let projects = App::read_json();
         let mut items: Vec<ListItem> = vec![];
         let mut input = Input::default();
 
-        self.load_projects(&mut items, &projects);
+        self.load_projects(&mut items);
 
         loop {
             terminal.draw(|f| self.render(f, f.size(), &items, &input))?;
@@ -150,10 +156,10 @@ impl App {
                     ViewMode::Tasks => match key.code {
                         Esc | Left => {
                             self.selected_project_name = None;
-                            self.load_projects(&mut items, &projects)
+                            self.load_projects(&mut items)
                         }
                         Char('r') => {
-                            let current_task = &projects
+                            let current_task = &self.projects
                                 [self.selected_project_index.selected().unwrap()]
                             .tasks[self.selected_task_index.selected().unwrap()];
 
@@ -168,7 +174,7 @@ impl App {
                     },
                     ViewMode::EditTask => match key.code {
                         Enter => {
-                            self.rename_task(&projects, input.value());
+                            self.rename_task(&mut items, input.value());
 
                             self.view_mode = ViewMode::Tasks;
                             input.reset()
@@ -180,15 +186,13 @@ impl App {
                     },
                     ViewMode::Project => match key.code {
                         Enter | Right => {
-                            let tasks =
-                                &projects[self.selected_project_index.selected().unwrap()].tasks;
                             self.selected_project_name = Some(
-                                projects[self.selected_project_index.selected().unwrap()]
+                                self.projects[self.selected_project_index.selected().unwrap()]
                                     .title
                                     .clone(),
                             );
 
-                            self.load_tasks(&mut items, &tasks);
+                            self.load_tasks(&mut items);
                             self.selected_task_index.select(Some(0))
                         }
                         Char('q') => return Ok(()),
