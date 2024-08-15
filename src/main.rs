@@ -1,5 +1,6 @@
 use std::{
     error::Error,
+    fmt::Debug,
     fs,
     io::{self, stdout},
 };
@@ -23,10 +24,10 @@ mod ui;
 
 use config::PATH_JSON;
 use project::Project;
-use task::Task;
+use task::{Task, TASK_STATUSES};
 use ui::Ui;
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Debug)]
 pub enum ViewMode {
     #[default]
     ViewProjects,
@@ -38,7 +39,6 @@ pub enum ViewMode {
 }
 
 pub struct App {
-    selected_project_name: Option<String>,
     selected_project_index: ListState,
     selected_task_index: ListState,
     selected_status_task_index: ListState,
@@ -75,7 +75,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 impl App {
     fn setup() -> Self {
         Self {
-            selected_project_name: None,
             selected_project_index: ListState::default().with_selected(Some(0)),
             selected_task_index: ListState::default().with_selected(Some(0)),
             selected_status_task_index: ListState::default().with_selected(Some(0)),
@@ -90,34 +89,32 @@ impl App {
     }
 
     fn run(&mut self, mut terminal: Terminal<impl Backend>) -> io::Result<()> {
-        let mut items: Vec<ListItem> = vec![];
         let mut input = Input::default();
 
+        let mut items: Vec<ListItem> = vec![];
         Project::load(self, &mut items);
 
+        let mut status_items: Vec<ListItem> = vec![];
+        Task::load_statues(&mut status_items);
+
         loop {
-            terminal.draw(|f| self.render(f, f.size(), &items, &input))?;
+            terminal.draw(|f| self.render(f, f.size(), &input, &items, &status_items))?;
 
             if let Event::Key(key) = event::read()? {
                 use KeyCode::*;
                 match self.view_mode {
                     ViewMode::ViewProjects => match key.code {
                         Enter | Right => {
-                            self.selected_project_name = Some(
-                                self.projects[self.selected_project_index.selected().unwrap()]
-                                    .title
-                                    .clone(),
-                            );
-
                             Task::load(self, &mut items);
-                            self.selected_task_index.select(Some(0))
+                            self.selected_task_index.select(Some(0));
+
+                            self.view_mode = ViewMode::ViewTasks
                         }
                         Char('r') => {
                             let current_project =
                                 &self.projects[self.selected_project_index.selected().unwrap()];
 
                             input = input.clone().with_value(current_project.title.clone());
-
                             self.view_mode = ViewMode::RenameProject
                         }
                         Char('q') => return Ok(()),
@@ -128,7 +125,6 @@ impl App {
                     ViewMode::RenameProject => match key.code {
                         Enter => {
                             Project::rename(self, &mut items, input.value());
-
                             self.view_mode = ViewMode::ViewProjects;
                             input.reset()
                         }
@@ -141,11 +137,13 @@ impl App {
                             input.handle_event(&Event::Key(key));
                         }
                     },
+
                     ViewMode::ViewTasks => match key.code {
                         Esc | Left => {
-                            self.selected_project_name = None;
-                            Project::load(self, &mut items)
+                            Project::load(self, &mut items);
+                            self.view_mode = ViewMode::ViewProjects;
                         }
+                        Enter => self.view_mode = ViewMode::ChangeStatusTask,
                         Char('r') => {
                             let current_task = &self.projects
                                 [self.selected_project_index.selected().unwrap()]
@@ -176,8 +174,22 @@ impl App {
                         }
                     },
                     ViewMode::ChangeStatusTask => match key.code {
-                        Down => self.next(&items),
-                        Up => self.previous(&items),
+                        Enter => {
+                            Task::change_status(
+                                self,
+                                &mut items,
+                                TASK_STATUSES[self.selected_status_task_index.selected().unwrap()],
+                            );
+
+                            self.view_mode = ViewMode::ViewTasks;
+
+                            self.selected_status_task_index =
+                                ListState::default().with_selected(Some(0))
+                        }
+                        Down => self.next(&status_items),
+                        Up => self.previous(&status_items),
+                        Esc => self.view_mode = ViewMode::ViewTasks,
+                        Char('q') => return Ok(()),
                         _ => {}
                     },
                 }
@@ -185,7 +197,14 @@ impl App {
         }
     }
 
-    fn render(&mut self, f: &mut Frame, area: Rect, items: &Vec<ListItem>, input: &Input) {
+    fn render(
+        &mut self,
+        f: &mut Frame,
+        area: Rect,
+        input: &Input,
+        items: &Vec<ListItem>,
+        status_items: &Vec<ListItem>,
+    ) {
         // Create a space for header, todo list and the footer.
         let vertical = Layout::vertical([
             Constraint::Min(5),
@@ -198,32 +217,68 @@ impl App {
             Ui::create_input("Rename", f, area, input)
         }
 
+        if self.view_mode == ViewMode::ChangeStatusTask {
+            let selected_task = self.projects[self.selected_project_index.selected().unwrap()]
+                .tasks[self.selected_task_index.selected().unwrap()]
+            .clone();
+
+            let title = format!("Status: {}", selected_task.title);
+
+            let area = Ui::create_rect_area(
+                if title.len() > 100 {
+                    90
+                } else {
+                    title.len() + 5
+                } as u16,
+                5,
+                area,
+            );
+
+            let block = Block::bordered().title(title);
+
+            let list_widget = List::new(status_items.clone())
+                .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+                .highlight_symbol("> ")
+                .highlight_spacing(HighlightSpacing::Always)
+                .block(block);
+
+            f.render_widget(Clear, area);
+            f.render_stateful_widget(list_widget, area, self.use_state())
+        }
+
+        let block: Block = match self.view_mode {
+            ViewMode::ViewTasks | ViewMode::ChangeStatusTask => {
+                let project_title = self.projects[self.selected_project_index.selected().unwrap()]
+                    .title
+                    .clone();
+
+                Block::bordered().title(project_title)
+            }
+            _ => Block::bordered(),
+        };
+
         // Iterate through all elements in the `items` and stylize them.
         let items = items.clone();
 
         // Create a List from all list items and highlight the currently selected one
-        let mut items = List::new(items)
+        let items = List::new(items)
             .highlight_style(Style::default().add_modifier(Modifier::BOLD))
             .highlight_symbol("> ")
-            .highlight_spacing(HighlightSpacing::Always);
+            .highlight_spacing(HighlightSpacing::Always)
+            .block(block);
 
-        if self.selected_project_name.is_some() {
-            items = items.block(
-                Block::bordered()
-                    .gray()
-                    .title(self.selected_project_name.clone().unwrap().bold()),
-            )
+        let footer = Paragraph::new(format!(
+            "{:?} - Task: {:?}",
+            self.view_mode, self.selected_task_index
+        ))
+        .block(Block::bordered().gray());
+
+        if self.view_mode != ViewMode::ChangeStatusTask {
+            f.render_stateful_widget(items, rest_area, self.use_state());
         } else {
-            items = items.block(Block::bordered().gray())
+            f.render_widget(items, rest_area)
         }
 
-        let footer = Paragraph::new(self.selected_task_index.selected().unwrap().to_string())
-            .block(Block::bordered().gray());
-
-        // We can now render the item list
-        // (look careful we are using StatefulWidget's render.)
-        // ratatui::widgets::StatefulWidget::render as stateful_render
-        f.render_stateful_widget(items, rest_area, self.use_state());
         f.render_widget(footer, footer_area);
         f.render_widget(Block::bordered().gray(), header_area);
     }

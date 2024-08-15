@@ -4,7 +4,7 @@ use ratatui::widgets::ListItem;
 use serde::{Deserialize, Serialize};
 use serde_json::to_string;
 
-use crate::{config::PATH_JSON, task::Task, App, ViewMode};
+use crate::{config::PATH_JSON, task::Task, App};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Project {
@@ -19,8 +19,6 @@ impl Project {
         for project in app.projects.iter() {
             items.push(ListItem::from(project.title.clone()))
         }
-
-        app.view_mode = ViewMode::ViewProjects
     }
 
     pub fn rename(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
