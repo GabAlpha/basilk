@@ -17,25 +17,25 @@ pub struct Task {
 }
 
 impl Task {
+    fn get_status_color(status: &String) -> ratatui::prelude::Color {
+        match status.as_str() {
+            "Done" => return Color::Green,
+            "OnGoing" => return Color::Yellow,
+            "UpNext" => return Color::Blue,
+            _ => return Color::Gray,
+        }
+    }
+
     pub fn load(app: &mut App, items: &mut Vec<ListItem>) {
         let tasks = &app.projects[app.selected_project_index.selected().unwrap()].tasks;
 
         items.clear();
 
-        fn get_task_status_color(status: &String) -> ratatui::prelude::Color {
-            match status.as_str() {
-                "Done" => return Color::Green,
-                "OnGoing" => return Color::Yellow,
-                "UpNext" => return Color::Blue,
-                _ => return Color::Gray,
-            }
-        }
-
         for task in tasks.iter() {
             let line = Line::from(vec![
                 Span::styled(
                     format!("[{}] ", task.status),
-                    Style::new().fg(get_task_status_color(&task.status)),
+                    Style::new().fg(Task::get_status_color(&task.status)),
                 ),
                 Span::raw(task.title.clone()),
             ]);
