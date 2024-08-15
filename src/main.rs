@@ -13,35 +13,26 @@ use ratatui::{
     prelude::*,
     widgets::*,
 };
-use serde::{Deserialize, Serialize};
-use serde_json::{from_str, to_string};
+use serde_json::from_str;
 use tui_input::{backend::crossterm::EventHandler, Input};
 
+mod config;
+mod project;
+mod task;
 mod ui;
 
+use config::PATH_JSON;
+use project::Project;
+use task::Task;
 use ui::Ui;
 
-static PATH_JSON: &'static str = "main2.json";
-
 #[derive(Default, PartialEq)]
-enum ViewMode {
+pub enum ViewMode {
     #[default]
     Project,
     Tasks,
     EditTask,
     EditProject,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-struct Task {
-    title: String,
-    status: String,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-struct Project {
-    title: String,
-    tasks: Vec<Task>,
 }
 
 pub struct App {
@@ -94,75 +85,11 @@ impl App {
         return from_str::<Vec<Project>>(&json).unwrap();
     }
 
-    fn load_projects(&mut self, items: &mut Vec<ListItem>) {
-        items.clear();
-
-        for project in self.projects.iter() {
-            items.push(ListItem::from(project.title.clone()))
-        }
-
-        self.view_mode = ViewMode::Project
-    }
-
-    fn load_tasks(&mut self, items: &mut Vec<ListItem>) {
-        let tasks = &self.projects[self.selected_project_index.selected().unwrap()].tasks;
-
-        items.clear();
-
-        fn get_task_status_color(status: &String) -> ratatui::prelude::Color {
-            match status.as_str() {
-                "Done" => return Color::Green,
-                "OnGoing" => return Color::Yellow,
-                "UpNext" => return Color::Blue,
-                _ => return Color::Gray,
-            }
-        }
-
-        for task in tasks.iter() {
-            let line = Line::from(vec![
-                Span::styled(
-                    format!("[{}] ", task.status),
-                    Style::new().fg(get_task_status_color(&task.status)),
-                ),
-                Span::raw(task.title.clone()),
-            ]);
-
-            items.push(ListItem::from(line))
-        }
-
-        self.view_mode = ViewMode::Tasks
-    }
-
-    fn rename_task(&mut self, items: &mut Vec<ListItem>, value: &str) {
-        let mut internal_projects = self.projects.clone();
-
-        internal_projects[self.selected_project_index.selected().unwrap()].tasks
-            [self.selected_task_index.selected().unwrap()]
-        .title = value.to_string();
-
-        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
-
-        self.projects = App::read_json();
-        self.load_tasks(items)
-    }
-
-    fn rename_project(&mut self, items: &mut Vec<ListItem>, value: &str) {
-        let mut internal_projects = self.projects.clone();
-
-        internal_projects[self.selected_project_index.selected().unwrap()].title =
-            value.to_string();
-
-        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
-
-        self.projects = App::read_json();
-        self.load_projects(items)
-    }
-
     fn run(&mut self, mut terminal: Terminal<impl Backend>) -> io::Result<()> {
         let mut items: Vec<ListItem> = vec![];
         let mut input = Input::default();
 
-        self.load_projects(&mut items);
+        Project::load(self, &mut items);
 
         loop {
             terminal.draw(|f| self.render(f, f.size(), &items, &input))?;
@@ -173,7 +100,7 @@ impl App {
                     ViewMode::Tasks => match key.code {
                         Esc | Left => {
                             self.selected_project_name = None;
-                            self.load_projects(&mut items)
+                            Project::load(self, &mut items)
                         }
                         Char('r') => {
                             let current_task = &self.projects
@@ -191,8 +118,7 @@ impl App {
                     },
                     ViewMode::EditTask => match key.code {
                         Enter => {
-                            self.rename_task(&mut items, input.value());
-
+                            Task::rename(self, &mut items, input.value());
                             self.view_mode = ViewMode::Tasks;
                             input.reset()
                         }
@@ -213,7 +139,7 @@ impl App {
                                     .clone(),
                             );
 
-                            self.load_tasks(&mut items);
+                            Task::load(self, &mut items);
                             self.selected_task_index.select(Some(0))
                         }
                         Char('r') => {
@@ -231,7 +157,7 @@ impl App {
                     },
                     ViewMode::EditProject => match key.code {
                         Enter => {
-                            self.rename_project(&mut items, input.value());
+                            Project::rename(self, &mut items, input.value());
 
                             self.view_mode = ViewMode::Project;
                             input.reset()
