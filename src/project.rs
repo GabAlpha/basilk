@@ -20,7 +20,7 @@ impl Project {
             items.push(ListItem::from(project.title.clone()))
         }
 
-        app.view_mode = ViewMode::Project
+        app.view_mode = ViewMode::ViewProjects
     }
 
     pub fn rename(app: &mut App, items: &mut Vec<ListItem>, value: &str) {

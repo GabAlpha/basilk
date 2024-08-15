@@ -43,7 +43,7 @@ impl Task {
             items.push(ListItem::from(line))
         }
 
-        app.view_mode = ViewMode::Tasks
+        app.view_mode = ViewMode::ViewTasks
     }
 
     pub fn rename(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
@@ -52,6 +52,19 @@ impl Task {
         internal_projects[app.selected_project_index.selected().unwrap()].tasks
             [app.selected_task_index.selected().unwrap()]
         .title = value.to_string();
+
+        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
+
+        app.projects = App::read_json();
+        Task::load(app, items)
+    }
+
+    pub fn change_status(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
+        let mut internal_projects = app.projects.clone();
+
+        internal_projects[app.selected_project_index.selected().unwrap()].tasks
+            [app.selected_task_index.selected().unwrap()]
+        .status = value.to_string();
 
         fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
 
