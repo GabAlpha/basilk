@@ -8,7 +8,7 @@ use tui_input::Input;
 pub struct Ui {}
 
 impl Ui {
-    pub fn create_popup(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    pub fn create_rect_area(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         let popup_layout = Layout::vertical([
             Constraint::Percentage((100 - percent_y) / 2),
             Constraint::Min(percent_y),
@@ -25,7 +25,7 @@ impl Ui {
     }
 
     pub fn create_input(title: &str, f: &mut Frame, area: Rect, input: &Input) {
-        let area = Ui::create_popup(50, 3, area);
+        let area = Ui::create_rect_area(50, 3, area);
 
         let width = area.width.max(3) - 3;
         let scroll = input.visual_scroll(width as usize);
