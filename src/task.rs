@@ -64,6 +64,27 @@ impl Task {
         }
     }
 
+    pub fn create(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
+        if value.is_empty() {
+            return;
+        }
+
+        let new_task = Task {
+            title: value.to_string(),
+            status: TASK_STATUS_UP_NEXT.to_string(),
+        };
+
+        let mut internal_projects = app.projects.clone();
+        internal_projects[app.selected_project_index.selected().unwrap()]
+            .tasks
+            .push(new_task);
+
+        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
+
+        app.projects = App::read_json();
+        Task::load(app, items)
+    }
+
     pub fn rename(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
         let mut internal_projects = app.projects.clone();
 

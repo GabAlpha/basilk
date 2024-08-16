@@ -36,6 +36,7 @@ pub enum ViewMode {
     ViewTasks,
     RenameTask,
     ChangeStatusTask,
+    AddTask,
 }
 
 pub struct App {
@@ -168,6 +169,7 @@ impl App {
 
                             self.view_mode = ViewMode::RenameTask
                         }
+                        Char('n') => self.view_mode = ViewMode::AddTask,
                         Char('q') => return Ok(()),
                         Down => self.next(&items),
                         Up => self.previous(&items),
@@ -205,6 +207,16 @@ impl App {
                         Char('q') => return Ok(()),
                         _ => {}
                     },
+                    ViewMode::AddTask => match key.code {
+                        Enter => {
+                            Task::create(self, &mut items, input.value());
+                            self.view_mode = ViewMode::ViewTasks
+                        }
+                        Esc => self.view_mode = ViewMode::ViewTasks,
+                        _ => {
+                            input.handle_event(&Event::Key(key));
+                        }
+                    },
                 }
             }
         }
@@ -228,6 +240,10 @@ impl App {
 
         if self.view_mode == ViewMode::RenameTask || self.view_mode == ViewMode::RenameProject {
             Ui::create_input("Rename", f, area, input)
+        }
+
+        if self.view_mode == ViewMode::AddTask {
+            Ui::create_input("Add new", f, area, input)
         }
 
         if self.view_mode == ViewMode::ChangeStatusTask {
@@ -320,6 +336,7 @@ impl App {
             ViewMode::ViewTasks => return &mut self.selected_task_index,
             ViewMode::RenameTask => return &mut self.selected_task_index,
             ViewMode::ChangeStatusTask => return &mut self.selected_status_task_index,
+            ViewMode::AddTask => return &mut self.selected_task_index,
         };
     }
 }
