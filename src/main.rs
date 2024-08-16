@@ -110,12 +110,20 @@ impl App {
                 match self.view_mode {
                     ViewMode::ViewProjects => match key.code {
                         Enter | Right => {
+                            if App::is_empty_items(&items) {
+                                continue;
+                            }
+
                             Task::load_items(self, &mut items);
                             self.selected_task_index.select(Some(0));
 
                             App::change_view(self, ViewMode::ViewTasks);
                         }
                         Char('r') => {
+                            if App::is_empty_items(&items) {
+                                continue;
+                            }
+
                             input = input
                                 .clone()
                                 .with_value(Project::get_current(self).title.clone());
@@ -128,6 +136,10 @@ impl App {
                             App::change_view(self, ViewMode::AddProject);
                         }
                         Char('d') => {
+                            if App::is_empty_items(&items) {
+                                continue;
+                            }
+
                             App::change_view(self, ViewMode::DeleteProject);
                         }
                         Down => {
@@ -201,11 +213,13 @@ impl App {
                             App::change_view(self, ViewMode::ViewProjects);
                         }
                         Enter => {
-                            let selected_task_status = &Task::get_current(self).status;
+                            if App::is_empty_items(&items) {
+                                continue;
+                            }
 
                             let index = TASK_STATUSES
                                 .into_iter()
-                                .position(|t| t == selected_task_status)
+                                .position(|t| t == &Task::get_current(self).status)
                                 .unwrap();
 
                             self.selected_status_task_index.select(Some(index));
@@ -213,8 +227,13 @@ impl App {
                             App::change_view(self, ViewMode::ChangeStatusTask);
                         }
                         Char('r') => {
-                            let current_task = Task::get_current(self);
-                            input = input.clone().with_value(current_task.title.clone());
+                            if App::is_empty_items(&items) {
+                                continue;
+                            }
+
+                            input = input
+                                .clone()
+                                .with_value(Task::get_current(self).title.clone());
 
                             App::change_view(self, ViewMode::RenameTask);
                         }
@@ -224,6 +243,10 @@ impl App {
                             App::change_view(self, ViewMode::AddTask);
                         }
                         Char('d') => {
+                            if App::is_empty_items(&items) {
+                                continue;
+                            }
+
                             App::change_view(self, ViewMode::DeleteTask);
                         }
                         Down => {
@@ -403,5 +426,12 @@ impl App {
 
     fn change_view(&mut self, mode: ViewMode) {
         self.view_mode = mode
+    }
+
+    fn is_empty_items(items: &Vec<ListItem>) -> bool {
+        match items.len() {
+            0 => true,
+            _ => false,
+        }
     }
 }
