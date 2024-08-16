@@ -41,7 +41,7 @@ impl View {
         f: &mut Frame,
         area: Rect,
     ) {
-        let area = Ui::create_rect_area(20, 5, area);
+        let area = Ui::create_rect_area(10, 5, area);
 
         let block = Block::bordered().title("Status");
 
@@ -61,10 +61,7 @@ impl View {
             | ViewMode::AddProject
             | ViewMode::RenameProject
             | ViewMode::DeleteProject => Block::bordered(),
-            _ => {
-                let project_title = Project::get_current(app).title.clone();
-                Block::bordered().title(project_title)
-            }
+            _ => Block::bordered().title(format!(" {} ", Project::get_current(app).title.clone())),
         };
 
         // Iterate through all elements in the `items` and stylize them.
