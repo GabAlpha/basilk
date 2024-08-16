@@ -107,13 +107,11 @@ impl App {
                         Enter | Right => {
                             Task::load(self, &mut items);
                             self.selected_task_index.select(Some(0));
-
                             self.view_mode = ViewMode::ViewTasks
                         }
                         Char('r') => {
                             let current_project =
                                 &self.projects[self.selected_project_index.selected().unwrap()];
-
                             input = input.clone().with_value(current_project.title.clone());
                             self.view_mode = ViewMode::RenameProject
                         }
@@ -143,7 +141,24 @@ impl App {
                             Project::load(self, &mut items);
                             self.view_mode = ViewMode::ViewProjects;
                         }
-                        Enter => self.view_mode = ViewMode::ChangeStatusTask,
+                        Enter => {
+                            let selected_task_status = &self.projects
+                                [self.selected_project_index.selected().unwrap()]
+                            .tasks[self.selected_task_index.selected().unwrap()]
+                            .status;
+
+                            let index = TASK_STATUSES
+                                .into_iter()
+                                .position(|t| t == selected_task_status)
+                                .unwrap();
+
+                            self.selected_status_task_index = self
+                                .selected_status_task_index
+                                .clone()
+                                .with_selected(Some(index));
+
+                            self.view_mode = ViewMode::ChangeStatusTask
+                        }
                         Char('r') => {
                             let current_task = &self.projects
                                 [self.selected_project_index.selected().unwrap()]
@@ -180,9 +195,7 @@ impl App {
                                 &mut items,
                                 TASK_STATUSES[self.selected_status_task_index.selected().unwrap()],
                             );
-
                             self.view_mode = ViewMode::ViewTasks;
-
                             self.selected_status_task_index =
                                 ListState::default().with_selected(Some(0))
                         }
