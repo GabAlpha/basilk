@@ -57,20 +57,6 @@ impl Project {
                 Span::raw(project.title.clone()),
             ])];
 
-            // lines.push(
-            //     Line::from(Span::raw(format!(
-            //         "[{}/{}] {}",
-            //         done_tasks.len(),
-            //         tasks.len(),
-            //         indicator.join("")
-            //     )))
-            //     .style(
-            //         Style::default()
-            //             .add_modifier(Modifier::ITALIC)
-            //             .fg(Project::get_indicator_done_tasks_color(percentage)),
-            //     ),
-            // );
-
             items.push(ListItem::from(lines))
         }
     }
