@@ -6,7 +6,7 @@ use ratatui::{
 };
 use tui_input::Input;
 
-use crate::{project::Project, task::Task, ui::Ui, App, ViewMode};
+use crate::{project::Project, task::Task, ui::Ui, util::Util, App, ViewMode};
 
 pub struct View {}
 
@@ -43,13 +43,11 @@ impl View {
     ) {
         let area = Ui::create_rect_area(10, 5, area);
 
-        let block = Block::bordered().title("Status");
-
         let task_status_list_widget = List::new(status_items.clone())
             .highlight_style(Style::default().add_modifier(Modifier::BOLD))
             .highlight_symbol("> ")
             .highlight_spacing(HighlightSpacing::Always)
-            .block(block);
+            .block(Block::bordered().title("Status"));
 
         f.render_widget(Clear, area);
         f.render_stateful_widget(task_status_list_widget, area, app.use_state())
@@ -61,7 +59,7 @@ impl View {
             | ViewMode::AddProject
             | ViewMode::RenameProject
             | ViewMode::DeleteProject => Block::bordered(),
-            _ => Block::bordered().title(format!(" {} ", Project::get_current(app).title.clone())),
+            _ => Block::bordered().title(Util::get_spaced_title(&Project::get_current(app).title)),
         };
 
         // Iterate through all elements in the `items` and stylize them.

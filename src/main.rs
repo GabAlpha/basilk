@@ -21,11 +21,13 @@ mod config;
 mod project;
 mod task;
 mod ui;
+mod util;
 mod view;
 
 use config::PATH_JSON;
 use project::Project;
 use task::{Task, TASK_STATUSES};
+use util::Util;
 use view::View;
 
 #[derive(Default, PartialEq, Debug)]
@@ -110,7 +112,7 @@ impl App {
                 match self.view_mode {
                     ViewMode::ViewProjects => match key.code {
                         Enter | Right => {
-                            if App::is_empty_items(&items) {
+                            if items.is_empty() {
                                 continue;
                             }
 
@@ -120,7 +122,7 @@ impl App {
                             App::change_view(self, ViewMode::ViewTasks);
                         }
                         Char('r') => {
-                            if App::is_empty_items(&items) {
+                            if items.is_empty() {
                                 continue;
                             }
 
@@ -136,7 +138,7 @@ impl App {
                             App::change_view(self, ViewMode::AddProject);
                         }
                         Char('d') => {
-                            if App::is_empty_items(&items) {
+                            if items.is_empty() {
                                 continue;
                             }
 
@@ -213,7 +215,7 @@ impl App {
                             App::change_view(self, ViewMode::ViewProjects);
                         }
                         Enter => {
-                            if App::is_empty_items(&items) {
+                            if items.is_empty() {
                                 continue;
                             }
 
@@ -227,7 +229,7 @@ impl App {
                             App::change_view(self, ViewMode::ChangeStatusTask);
                         }
                         Char('r') => {
-                            if App::is_empty_items(&items) {
+                            if items.is_empty() {
                                 continue;
                             }
 
@@ -243,7 +245,7 @@ impl App {
                             App::change_view(self, ViewMode::AddTask);
                         }
                         Char('d') => {
-                            if App::is_empty_items(&items) {
+                            if items.is_empty() {
                                 continue;
                             }
 
@@ -430,12 +432,5 @@ impl App {
 
     fn change_view(&mut self, mode: ViewMode) {
         self.view_mode = mode
-    }
-
-    fn is_empty_items(items: &Vec<ListItem>) -> bool {
-        match items.len() {
-            0 => true,
-            _ => false,
-        }
     }
 }
