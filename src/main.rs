@@ -21,11 +21,12 @@ mod config;
 mod project;
 mod task;
 mod ui;
+mod view;
 
 use config::PATH_JSON;
 use project::Project;
 use task::{Task, TASK_STATUSES};
-use ui::Ui;
+use view::View;
 
 #[derive(Default, PartialEq, Debug)]
 pub enum ViewMode {
@@ -115,8 +116,9 @@ impl App {
                             App::change_view(self, ViewMode::ViewTasks);
                         }
                         Char('r') => {
-                            let current_project = Project::get_current(self);
-                            input = input.clone().with_value(current_project.title.clone());
+                            input = input
+                                .clone()
+                                .with_value(Project::get_current(self).title.clone());
 
                             App::change_view(self, ViewMode::RenameProject);
                         }
@@ -335,78 +337,22 @@ impl App {
         let [header_area, rest_area, footer_area] = vertical.areas(area);
 
         if self.view_mode == ViewMode::AddTask || self.view_mode == ViewMode::AddProject {
-            Ui::create_input("Add", f, area, input)
+            View::show_add_modal(f, area, input)
         }
 
         if self.view_mode == ViewMode::RenameTask || self.view_mode == ViewMode::RenameProject {
-            Ui::create_input("Rename", f, area, input)
+            View::show_rename_modal(f, area, input)
         }
 
         if self.view_mode == ViewMode::DeleteTask || self.view_mode == ViewMode::DeleteProject {
-            let title = match self.view_mode {
-                ViewMode::DeleteTask => &Task::get_current(self).title,
-                ViewMode::DeleteProject => &Project::get_current(self).title,
-                _ => "",
-            };
-
-            Ui::create_question_modal(
-                "Are you sure to delete?",
-                format!("\"{}\"", title).as_str(),
-                "Delete",
-                f,
-                area,
-            )
+            View::show_delete_modal(self, f, area)
         }
 
         if self.view_mode == ViewMode::ChangeStatusTask {
-            let area = Ui::create_rect_area(20, 5, area);
-
-            let block = Block::bordered().title("Status");
-
-            let task_status_list_widget = List::new(status_items.clone())
-                .highlight_style(Style::default().add_modifier(Modifier::BOLD))
-                .highlight_symbol("> ")
-                .highlight_spacing(HighlightSpacing::Always)
-                .block(block);
-
-            f.render_widget(Clear, area);
-            f.render_stateful_widget(task_status_list_widget, area, self.use_state())
+            View::show_select_task_status_modal(self, status_items, f, area)
         }
 
-        let block: Block = match self.view_mode {
-            ViewMode::ViewProjects
-            | ViewMode::AddProject
-            | ViewMode::RenameProject
-            | ViewMode::DeleteProject => Block::bordered(),
-            _ => {
-                let project_title = Project::get_current(self).title.clone();
-                Block::bordered().title(project_title)
-            }
-        };
-
-        // Iterate through all elements in the `items` and stylize them.
-        let items = items.clone();
-
-        // Create a List from all list items and highlight the currently selected one
-        let items = List::new(items)
-            .highlight_style(Style::default().add_modifier(Modifier::BOLD))
-            .highlight_symbol("> ")
-            .highlight_spacing(HighlightSpacing::Always)
-            .block(block);
-
-        let footer = Paragraph::new(format!(
-            "{:?} - Task: {:?}",
-            self.view_mode, self.selected_task_index
-        ))
-        .block(Block::bordered().gray());
-
-        if self.view_mode != ViewMode::ChangeStatusTask {
-            f.render_stateful_widget(items, rest_area, self.use_state());
-        } else {
-            f.render_widget(items, rest_area)
-        }
-
-        f.render_widget(footer, footer_area);
+        View::show_items(self, items, f, rest_area);
         f.render_widget(Block::bordered().gray(), header_area);
     }
 
