@@ -1,7 +1,6 @@
 use std::{
     error::Error,
     fmt::Debug,
-    fs,
     io::{self, stdout},
 };
 
@@ -14,20 +13,19 @@ use ratatui::{
     prelude::*,
     widgets::*,
 };
-use serde_json::from_str;
 use tui_input::{backend::crossterm::EventHandler, Input};
 
 mod config;
+mod json;
 mod project;
 mod task;
 mod ui;
 mod util;
 mod view;
 
-use config::PATH_JSON;
+use json::Json;
 use project::Project;
 use task::{Task, TASK_STATUSES};
-use util::Util;
 use view::View;
 
 #[derive(Default, PartialEq, Debug)]
@@ -86,13 +84,8 @@ impl App {
             selected_task_index: ListState::default().with_selected(Some(0)),
             selected_status_task_index: ListState::default().with_selected(Some(0)),
             view_mode: ViewMode::default(),
-            projects: App::read_json(),
+            projects: Json::read(),
         }
-    }
-
-    fn read_json() -> Vec<Project> {
-        let json = fs::read_to_string(PATH_JSON).unwrap();
-        return from_str::<Vec<Project>>(&json).unwrap();
     }
 
     fn run(&mut self, mut terminal: Terminal<impl Backend>) -> io::Result<()> {

@@ -1,15 +1,12 @@
-use std::fs;
-
 use ratatui::{
     style::{Color, Style},
     text::{Line, Span},
     widgets::ListItem,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::to_string;
 
 use crate::{
-    config::PATH_JSON,
+    json::Json,
     task::{Task, TASK_STATUS_DONE},
     App,
 };
@@ -61,7 +58,7 @@ impl Project {
     }
 
     pub fn reload(app: &mut App, items: &mut Vec<ListItem>) {
-        app.projects = App::read_json();
+        app.projects = Json::read();
         Project::load_items(app, items)
     }
 
@@ -82,8 +79,7 @@ impl Project {
         let mut internal_projects = app.projects.clone();
         internal_projects.push(new_project);
 
-        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
-
+        Json::write(internal_projects);
         Project::reload(app, items)
     }
 
@@ -92,8 +88,7 @@ impl Project {
 
         internal_projects[app.selected_project_index.selected().unwrap()].title = value.to_string();
 
-        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
-
+        Json::write(internal_projects);
         Project::reload(app, items)
     }
 
@@ -102,8 +97,7 @@ impl Project {
 
         internal_projects.remove(app.selected_project_index.selected().unwrap());
 
-        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
-
+        Json::write(internal_projects);
         Project::reload(app, items)
     }
 }

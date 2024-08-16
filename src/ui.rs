@@ -6,8 +6,6 @@ use ratatui::{
 };
 use tui_input::Input;
 
-use crate::util::Util;
-
 pub struct Ui {}
 
 impl Ui {
