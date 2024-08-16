@@ -115,7 +115,7 @@ impl App {
                             App::change_view(self, ViewMode::ViewTasks);
                         }
                         Char('r') => {
-                            let current_project = Project::get_current_project(self);
+                            let current_project = Project::get_current(self);
                             input = input.clone().with_value(current_project.title.clone());
 
                             App::change_view(self, ViewMode::RenameProject);
@@ -199,7 +199,7 @@ impl App {
                             App::change_view(self, ViewMode::ViewProjects);
                         }
                         Enter => {
-                            let selected_task_status = &Task::get_current_task(self).status;
+                            let selected_task_status = &Task::get_current(self).status;
 
                             let index = TASK_STATUSES
                                 .into_iter()
@@ -211,7 +211,7 @@ impl App {
                             App::change_view(self, ViewMode::ChangeStatusTask);
                         }
                         Char('r') => {
-                            let current_task = Task::get_current_task(self);
+                            let current_task = Task::get_current(self);
                             input = input.clone().with_value(current_task.title.clone());
 
                             App::change_view(self, ViewMode::RenameTask);
@@ -283,7 +283,7 @@ impl App {
                         Enter => {
                             Task::create(self, &mut items, input.value());
 
-                            let tasks = Task::get_tasks(self);
+                            let tasks = Task::get_all(self);
                             self.selected_task_index.select(Some(tasks.len()));
 
                             App::change_view(self, ViewMode::ViewTasks);
@@ -344,8 +344,8 @@ impl App {
 
         if self.view_mode == ViewMode::DeleteTask || self.view_mode == ViewMode::DeleteProject {
             let title = match self.view_mode {
-                ViewMode::DeleteTask => &Task::get_current_task(self).title,
-                ViewMode::DeleteProject => &Task::get_current_task(self).title,
+                ViewMode::DeleteTask => &Task::get_current(self).title,
+                ViewMode::DeleteProject => &Project::get_current(self).title,
                 _ => "",
             };
 
@@ -388,7 +388,7 @@ impl App {
             | ViewMode::RenameProject
             | ViewMode::DeleteProject => Block::bordered(),
             _ => {
-                let project_title = Project::get_current_project(self).title.clone();
+                let project_title = Project::get_current(self).title.clone();
                 Block::bordered().title(project_title)
             }
         };

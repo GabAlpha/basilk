@@ -61,7 +61,7 @@ impl Project {
         }
     }
 
-    pub fn get_current_project(app: &mut App) -> &Project {
+    pub fn get_current(app: &mut App) -> &Project {
         return &app.projects[app.selected_project_index.selected().unwrap()];
     }
 

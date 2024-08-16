@@ -99,11 +99,11 @@ impl Task {
         app.selected_task_index = ListState::default().with_selected(Some(new_index))
     }
 
-    pub fn get_tasks(app: &App) -> &Vec<Task> {
+    pub fn get_all(app: &App) -> &Vec<Task> {
         return &app.projects[app.selected_project_index.selected().unwrap()].tasks;
     }
 
-    pub fn get_current_task(app: &mut App) -> &Task {
+    pub fn get_current(app: &mut App) -> &Task {
         return &app.projects[app.selected_project_index.selected().unwrap()].tasks
             [app.selected_task_index.selected().unwrap()];
     }
