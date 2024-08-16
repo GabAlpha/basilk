@@ -32,6 +32,7 @@ pub enum ViewMode {
     #[default]
     ViewProjects,
     RenameProject,
+    AddProject,
 
     ViewTasks,
     RenameTask,
@@ -116,6 +117,10 @@ impl App {
                             input = input.clone().with_value(current_project.title.clone());
                             self.view_mode = ViewMode::RenameProject
                         }
+                        Char('n') => {
+                            input.reset();
+                            self.view_mode = ViewMode::AddProject
+                        }
                         Char('q') => return Ok(()),
                         Down => self.next(&items),
                         Up => self.previous(&items),
@@ -132,6 +137,21 @@ impl App {
                             input.reset()
                         }
                         Char('q') => return Ok(()),
+                        _ => {
+                            input.handle_event(&Event::Key(key));
+                        }
+                    },
+                    ViewMode::AddProject => match key.code {
+                        Esc => self.view_mode = ViewMode::ViewProjects,
+                        Enter => {
+                            Project::create(self, &mut items, input.value());
+
+                            let project = &self.projects;
+
+                            self.view_mode = ViewMode::ViewProjects;
+                            self.selected_project_index =
+                                ListState::default().with_selected(Some(project.len()))
+                        }
                         _ => {
                             input.handle_event(&Event::Key(key));
                         }
@@ -248,12 +268,12 @@ impl App {
         ]);
         let [header_area, rest_area, footer_area] = vertical.areas(area);
 
-        if self.view_mode == ViewMode::RenameTask || self.view_mode == ViewMode::RenameProject {
-            Ui::create_input("Rename", f, area, input)
+        if self.view_mode == ViewMode::AddTask || self.view_mode == ViewMode::AddProject {
+            Ui::create_input("Add new", f, area, input)
         }
 
-        if self.view_mode == ViewMode::AddTask {
-            Ui::create_input("Add new", f, area, input)
+        if self.view_mode == ViewMode::RenameTask || self.view_mode == ViewMode::RenameProject {
+            Ui::create_input("Rename", f, area, input)
         }
 
         if self.view_mode == ViewMode::ChangeStatusTask {
@@ -272,14 +292,16 @@ impl App {
         }
 
         let block: Block = match self.view_mode {
-            ViewMode::ViewTasks | ViewMode::ChangeStatusTask => {
+            ViewMode::ViewProjects | ViewMode::AddProject | ViewMode::RenameProject => {
+                Block::bordered()
+            }
+            _ => {
                 let project_title = self.projects[self.selected_project_index.selected().unwrap()]
                     .title
                     .clone();
 
                 Block::bordered().title(project_title)
             }
-            _ => Block::bordered(),
         };
 
         // Iterate through all elements in the `items` and stylize them.
@@ -342,6 +364,7 @@ impl App {
         match self.view_mode {
             ViewMode::ViewProjects => return &mut self.selected_project_index,
             ViewMode::RenameProject => return &mut self.selected_project_index,
+            ViewMode::AddProject => return &mut self.selected_project_index,
 
             ViewMode::ViewTasks => return &mut self.selected_task_index,
             ViewMode::RenameTask => return &mut self.selected_task_index,

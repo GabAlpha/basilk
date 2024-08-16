@@ -21,6 +21,25 @@ impl Project {
         }
     }
 
+    pub fn create(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
+        if value.is_empty() {
+            return;
+        }
+
+        let new_project = Project {
+            title: value.to_string(),
+            tasks: vec![],
+        };
+
+        let mut internal_projects = app.projects.clone();
+        internal_projects.push(new_project);
+
+        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
+
+        app.projects = App::read_json();
+        Project::load(app, items)
+    }
+
     pub fn rename(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
         let mut internal_projects = app.projects.clone();
 
