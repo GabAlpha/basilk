@@ -3,7 +3,7 @@ use std::fs;
 use ratatui::{
     style::{Color, Style},
     text::{Line, Span},
-    widgets::ListItem,
+    widgets::{ListItem, ListState},
 };
 use serde::{Deserialize, Serialize};
 use serde_json::to_string;
@@ -22,6 +22,9 @@ pub const TASK_STATUS_UP_NEXT: &str = "UpNext";
 
 pub const TASK_STATUSES: [&'static str; 3] =
     [TASK_STATUS_UP_NEXT, TASK_STATUS_ON_GOING, TASK_STATUS_DONE];
+
+const TASK_STATUSES_SORT_ORDER: [&'static str; 3] =
+    [TASK_STATUS_ON_GOING, TASK_STATUS_UP_NEXT, TASK_STATUS_DONE];
 
 impl Task {
     fn get_status_color(status: &String) -> ratatui::prelude::Color {
@@ -47,7 +50,28 @@ impl Task {
     }
 
     pub fn load(app: &mut App, items: &mut Vec<ListItem>) {
-        let tasks = &app.projects[app.selected_project_index.selected().unwrap()].tasks;
+        let tasks = &mut app.projects[app.selected_project_index.selected().unwrap()].tasks;
+
+        let last_task_title_selected = tasks
+            .clone()
+            .get(app.selected_task_index.selected().unwrap())
+            .unwrap_or(&Task {
+                title: "".to_string(),
+                status: "".to_string(),
+            })
+            .clone()
+            .title;
+
+        tasks.sort_by_key(|t| {
+            TASK_STATUSES_SORT_ORDER
+                .into_iter()
+                .position(|o| o == t.status)
+        });
+
+        let new_index = tasks
+            .into_iter()
+            .position(|t| t.title == last_task_title_selected)
+            .unwrap_or(0);
 
         items.clear();
 
@@ -62,6 +86,8 @@ impl Task {
 
             items.push(ListItem::from(line))
         }
+
+        app.selected_task_index = ListState::default().with_selected(Some(new_index))
     }
 
     pub fn create(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
