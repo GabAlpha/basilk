@@ -1,10 +1,18 @@
 use std::fs;
 
-use ratatui::widgets::ListItem;
+use ratatui::{
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::ListItem,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::to_string;
 
-use crate::{config::PATH_JSON, task::Task, App};
+use crate::{
+    config::PATH_JSON,
+    task::{Task, TASK_STATUS_DONE},
+    App,
+};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Project {
@@ -13,11 +21,46 @@ pub struct Project {
 }
 
 impl Project {
+    fn get_indicator_done_tasks_color(percentage: usize) -> ratatui::prelude::Color {
+        match percentage {
+            p if p == 0 => return Color::DarkGray,
+            p if p >= 25 && p <= 50 => return Color::LightMagenta,
+            p if p >= 50 && p < 100 => return Color::LightYellow,
+            p if p == 100 => return Color::LightGreen,
+            _ => return Color::White,
+        }
+    }
     pub fn load(app: &mut App, items: &mut Vec<ListItem>) {
         items.clear();
 
         for project in app.projects.iter() {
-            items.push(ListItem::from(project.title.clone()))
+            let tasks = &project.tasks;
+
+            let done_tasks: Vec<Task> = tasks
+                .clone()
+                .into_iter()
+                .filter(|t| t.status == TASK_STATUS_DONE)
+                .collect();
+
+            let percentage = if tasks.len() == 0 {
+                0
+            } else {
+                (done_tasks.len() * 100) / tasks.len()
+            };
+
+            let indicator: Vec<&str> = vec![0; percentage / 10].iter().map(|_v| "-").collect();
+
+            let mut lines = vec![Line::from(project.title.clone())];
+
+            lines.push(
+                Line::from(Span::raw(format!("{}% {}", percentage, indicator.join("")))).style(
+                    Style::default()
+                        .add_modifier(Modifier::ITALIC)
+                        .fg(Project::get_indicator_done_tasks_color(percentage)),
+                ),
+            );
+
+            items.push(ListItem::from(lines))
         }
     }
 

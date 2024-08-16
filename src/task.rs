@@ -29,9 +29,9 @@ const TASK_STATUSES_SORT_ORDER: [&'static str; 3] =
 impl Task {
     fn get_status_color(status: &String) -> ratatui::prelude::Color {
         match status.as_str() {
-            TASK_STATUS_DONE => return Color::Green,
+            TASK_STATUS_DONE => return Color::LightGreen,
             TASK_STATUS_ON_GOING => return Color::Yellow,
-            TASK_STATUS_UP_NEXT => return Color::Blue,
+            TASK_STATUS_UP_NEXT => return Color::LightMagenta,
             _ => return Color::Gray,
         }
     }
