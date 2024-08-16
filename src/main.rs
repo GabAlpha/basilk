@@ -335,7 +335,7 @@ impl App {
         let [header_area, rest_area, footer_area] = vertical.areas(area);
 
         if self.view_mode == ViewMode::AddTask || self.view_mode == ViewMode::AddProject {
-            Ui::create_input("Add new", f, area, input)
+            Ui::create_input("Add", f, area, input)
         }
 
         if self.view_mode == ViewMode::RenameTask || self.view_mode == ViewMode::RenameProject {
@@ -344,14 +344,8 @@ impl App {
 
         if self.view_mode == ViewMode::DeleteTask || self.view_mode == ViewMode::DeleteProject {
             let title = match self.view_mode {
-                ViewMode::DeleteTask => {
-                    &self.projects[self.selected_project_index.selected().unwrap()].tasks
-                        [self.selected_task_index.selected().unwrap()]
-                    .title
-                }
-                ViewMode::DeleteProject => {
-                    &self.projects[self.selected_project_index.selected().unwrap()].title
-                }
+                ViewMode::DeleteTask => &Task::get_current_task(self).title,
+                ViewMode::DeleteProject => &Task::get_current_task(self).title,
                 _ => "",
             };
 
@@ -394,10 +388,7 @@ impl App {
             | ViewMode::RenameProject
             | ViewMode::DeleteProject => Block::bordered(),
             _ => {
-                let project_title = self.projects[self.selected_project_index.selected().unwrap()]
-                    .title
-                    .clone();
-
+                let project_title = Project::get_current_project(self).title.clone();
                 Block::bordered().title(project_title)
             }
         };
