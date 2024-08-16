@@ -54,7 +54,7 @@ impl Task {
 
         let last_task_title_selected = tasks
             .clone()
-            .get(app.selected_task_index.selected().unwrap())
+            .get(app.selected_task_index.selected().unwrap_or(0))
             .unwrap_or(&Task {
                 title: "".to_string(),
                 status: "".to_string(),
