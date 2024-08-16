@@ -111,49 +111,66 @@ impl App {
                         Enter | Right => {
                             Task::load(self, &mut items);
                             self.selected_task_index.select(Some(0));
-                            self.view_mode = ViewMode::ViewTasks
+
+                            App::change_view(self, ViewMode::ViewTasks);
                         }
                         Char('r') => {
-                            let current_project =
-                                &self.projects[self.selected_project_index.selected().unwrap()];
+                            let current_project = Project::get_current_project(self);
                             input = input.clone().with_value(current_project.title.clone());
-                            self.view_mode = ViewMode::RenameProject
+
+                            App::change_view(self, ViewMode::RenameProject);
                         }
                         Char('n') => {
                             input.reset();
-                            self.view_mode = ViewMode::AddProject
+
+                            App::change_view(self, ViewMode::AddProject);
                         }
-                        Char('d') => self.view_mode = ViewMode::DeleteProject,
-                        Char('q') => return Ok(()),
-                        Down => self.next(&items),
-                        Up => self.previous(&items),
+                        Char('d') => {
+                            App::change_view(self, ViewMode::DeleteProject);
+                        }
+                        Down => {
+                            self.next(&items);
+                        }
+                        Up => {
+                            self.previous(&items);
+                        }
+                        Char('q') => {
+                            return Ok(());
+                        }
                         _ => {}
                     },
                     ViewMode::RenameProject => match key.code {
                         Enter => {
                             Project::rename(self, &mut items, input.value());
-                            self.view_mode = ViewMode::ViewProjects;
-                            input.reset()
+                            input.reset();
+
+                            App::change_view(self, ViewMode::ViewProjects);
                         }
                         Esc => {
-                            self.view_mode = ViewMode::ViewProjects;
-                            input.reset()
+                            input.reset();
+
+                            App::change_view(self, ViewMode::ViewProjects);
                         }
-                        Char('q') => return Ok(()),
+                        Char('q') => {
+                            return Ok(());
+                        }
                         _ => {
                             input.handle_event(&Event::Key(key));
                         }
                     },
                     ViewMode::AddProject => match key.code {
-                        Esc => self.view_mode = ViewMode::ViewProjects,
+                        Esc => {
+                            App::change_view(self, ViewMode::ViewProjects);
+                        }
                         Enter => {
                             Project::create(self, &mut items, input.value());
+                            self.selected_project_index
+                                .select(Some(self.projects.len()));
 
-                            let project = &self.projects;
-
-                            self.view_mode = ViewMode::ViewProjects;
-                            self.selected_project_index =
-                                ListState::default().with_selected(Some(project.len()))
+                            App::change_view(self, ViewMode::ViewProjects);
+                        }
+                        Char('q') => {
+                            return Ok(());
                         }
                         _ => {
                             input.handle_event(&Event::Key(key));
@@ -162,68 +179,77 @@ impl App {
                     ViewMode::DeleteProject => match key.code {
                         Char('y') => {
                             Project::delete(self, &mut items);
-
-                            self.view_mode = ViewMode::ViewProjects;
                             self.selected_project_index.select_previous();
+
+                            App::change_view(self, ViewMode::ViewProjects);
                         }
-                        Char('n') => self.view_mode = ViewMode::ViewProjects,
-                        Char('q') => return Ok(()),
+                        Char('n') => {
+                            App::change_view(self, ViewMode::ViewProjects);
+                        }
+                        Char('q') => {
+                            return Ok(());
+                        }
                         _ => {}
                     },
 
                     ViewMode::ViewTasks => match key.code {
                         Esc | Left => {
                             Project::load(self, &mut items);
-                            self.view_mode = ViewMode::ViewProjects;
+
+                            App::change_view(self, ViewMode::ViewProjects);
                         }
                         Enter => {
-                            let selected_task_status = &self.projects
-                                [self.selected_project_index.selected().unwrap()]
-                            .tasks[self.selected_task_index.selected().unwrap()]
-                            .status;
+                            let selected_task_status = &Task::get_current_task(self).status;
 
                             let index = TASK_STATUSES
                                 .into_iter()
                                 .position(|t| t == selected_task_status)
                                 .unwrap();
 
-                            self.selected_status_task_index = self
-                                .selected_status_task_index
-                                .clone()
-                                .with_selected(Some(index));
+                            self.selected_status_task_index.select(Some(index));
 
-                            self.view_mode = ViewMode::ChangeStatusTask
+                            App::change_view(self, ViewMode::ChangeStatusTask);
                         }
                         Char('r') => {
-                            let current_task = &self.projects
-                                [self.selected_project_index.selected().unwrap()]
-                            .tasks[self.selected_task_index.selected().unwrap()];
-
+                            let current_task = Task::get_current_task(self);
                             input = input.clone().with_value(current_task.title.clone());
 
-                            self.view_mode = ViewMode::RenameTask
+                            App::change_view(self, ViewMode::RenameTask);
                         }
                         Char('n') => {
                             input.reset();
-                            self.view_mode = ViewMode::AddTask
+
+                            App::change_view(self, ViewMode::AddTask);
                         }
-                        Char('d') => self.view_mode = ViewMode::DeleteTask,
-                        Char('q') => return Ok(()),
-                        Down => self.next(&items),
-                        Up => self.previous(&items),
+                        Char('d') => {
+                            App::change_view(self, ViewMode::DeleteTask);
+                        }
+                        Down => {
+                            self.next(&items);
+                        }
+                        Up => {
+                            self.previous(&items);
+                        }
+                        Char('q') => {
+                            return Ok(());
+                        }
                         _ => {}
                     },
                     ViewMode::RenameTask => match key.code {
                         Enter => {
                             Task::rename(self, &mut items, input.value());
-                            self.view_mode = ViewMode::ViewTasks;
-                            input.reset()
+                            input.reset();
+
+                            App::change_view(self, ViewMode::ViewTasks);
                         }
                         Esc => {
-                            self.view_mode = ViewMode::ViewTasks;
-                            input.reset()
+                            input.reset();
+
+                            App::change_view(self, ViewMode::ViewTasks);
                         }
-                        Char('q') => return Ok(()),
+                        Char('q') => {
+                            return Ok(());
+                        }
                         _ => {
                             input.handle_event(&Event::Key(key));
                         }
@@ -235,29 +261,39 @@ impl App {
                                 &mut items,
                                 TASK_STATUSES[self.selected_status_task_index.selected().unwrap()],
                             );
-                            self.view_mode = ViewMode::ViewTasks;
-                            self.selected_status_task_index =
-                                ListState::default().with_selected(Some(0))
+
+                            self.selected_status_task_index.select(Some(0));
+                            App::change_view(self, ViewMode::ViewTasks);
                         }
-                        Down => self.next(&status_items),
-                        Up => self.previous(&status_items),
-                        Esc => self.view_mode = ViewMode::ViewTasks,
-                        Char('q') => return Ok(()),
+                        Down => {
+                            self.next(&status_items);
+                        }
+                        Up => {
+                            self.previous(&status_items);
+                        }
+                        Esc => {
+                            App::change_view(self, ViewMode::ViewTasks);
+                        }
+                        Char('q') => {
+                            return Ok(());
+                        }
                         _ => {}
                     },
                     ViewMode::AddTask => match key.code {
                         Enter => {
                             Task::create(self, &mut items, input.value());
 
-                            let tasks = &self.projects
-                                [self.selected_project_index.selected().unwrap()]
-                            .tasks;
+                            let tasks = Task::get_tasks(self);
+                            self.selected_task_index.select(Some(tasks.len()));
 
-                            self.view_mode = ViewMode::ViewTasks;
-                            self.selected_task_index =
-                                ListState::default().with_selected(Some(tasks.len()))
+                            App::change_view(self, ViewMode::ViewTasks);
                         }
-                        Esc => self.view_mode = ViewMode::ViewTasks,
+                        Esc => {
+                            App::change_view(self, ViewMode::ViewTasks);
+                        }
+                        Char('q') => {
+                            return Ok(());
+                        }
                         _ => {
                             input.handle_event(&Event::Key(key));
                         }
@@ -265,12 +301,16 @@ impl App {
                     ViewMode::DeleteTask => match key.code {
                         Char('y') => {
                             Task::delete(self, &mut items);
-
-                            self.view_mode = ViewMode::ViewTasks;
                             self.selected_task_index.select_previous();
+
+                            App::change_view(self, ViewMode::ViewTasks);
                         }
-                        Char('n') => self.view_mode = ViewMode::ViewTasks,
-                        Char('q') => return Ok(()),
+                        Char('n') => {
+                            App::change_view(self, ViewMode::ViewTasks);
+                        }
+                        Char('q') => {
+                            return Ok(());
+                        }
                         _ => {}
                     },
                 }
@@ -431,5 +471,9 @@ impl App {
             ViewMode::AddTask => return &mut self.selected_task_index,
             ViewMode::DeleteTask => return &mut self.selected_task_index,
         };
+    }
+
+    fn change_view(&mut self, mode: ViewMode) {
+        self.view_mode = mode
     }
 }

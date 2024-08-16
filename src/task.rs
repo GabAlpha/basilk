@@ -99,6 +99,15 @@ impl Task {
         app.selected_task_index = ListState::default().with_selected(Some(new_index))
     }
 
+    pub fn get_tasks(app: &App) -> &Vec<Task> {
+        return &app.projects[app.selected_project_index.selected().unwrap()].tasks;
+    }
+
+    pub fn get_current_task(app: &mut App) -> &Task {
+        return &app.projects[app.selected_project_index.selected().unwrap()].tasks
+            [app.selected_task_index.selected().unwrap()];
+    }
+
     pub fn create(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
         if value.is_empty() {
             return;

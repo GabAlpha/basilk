@@ -61,6 +61,10 @@ impl Project {
         }
     }
 
+    pub fn get_current_project(app: &mut App) -> &Project {
+        return &app.projects[app.selected_project_index.selected().unwrap()];
+    }
+
     pub fn create(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
         if value.is_empty() {
             return;
