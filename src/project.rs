@@ -50,4 +50,15 @@ impl Project {
         app.projects = App::read_json();
         Project::load(app, items)
     }
+
+    pub fn delete(app: &mut App, items: &mut Vec<ListItem>) {
+        let mut internal_projects = app.projects.clone();
+
+        internal_projects.remove(app.selected_project_index.selected().unwrap());
+
+        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
+
+        app.projects = App::read_json();
+        Project::load(app, items)
+    }
 }

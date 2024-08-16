@@ -33,6 +33,7 @@ pub enum ViewMode {
     ViewProjects,
     RenameProject,
     AddProject,
+    DeleteProject,
 
     ViewTasks,
     RenameTask,
@@ -122,6 +123,7 @@ impl App {
                             input.reset();
                             self.view_mode = ViewMode::AddProject
                         }
+                        Char('d') => self.view_mode = ViewMode::DeleteProject,
                         Char('q') => return Ok(()),
                         Down => self.next(&items),
                         Up => self.previous(&items),
@@ -156,6 +158,17 @@ impl App {
                         _ => {
                             input.handle_event(&Event::Key(key));
                         }
+                    },
+                    ViewMode::DeleteProject => match key.code {
+                        Char('y') => {
+                            Project::delete(self, &mut items);
+
+                            self.view_mode = ViewMode::ViewProjects;
+                            self.selected_project_index.select_previous();
+                        }
+                        Char('n') => self.view_mode = ViewMode::ViewProjects,
+                        Char('q') => return Ok(()),
+                        _ => {}
                     },
 
                     ViewMode::ViewTasks => match key.code {
@@ -289,10 +302,18 @@ impl App {
             Ui::create_input("Rename", f, area, input)
         }
 
-        if self.view_mode == ViewMode::DeleteTask {
-            let task_title = &self.projects[self.selected_project_index.selected().unwrap()].tasks
-                [self.selected_task_index.selected().unwrap()]
-            .title;
+        if self.view_mode == ViewMode::DeleteTask || self.view_mode == ViewMode::DeleteProject {
+            let title = match self.view_mode {
+                ViewMode::DeleteTask => {
+                    &self.projects[self.selected_project_index.selected().unwrap()].tasks
+                        [self.selected_task_index.selected().unwrap()]
+                    .title
+                }
+                ViewMode::DeleteProject => {
+                    &self.projects[self.selected_project_index.selected().unwrap()].title
+                }
+                _ => "",
+            };
 
             let area = Ui::create_rect_area(20, 6, area);
 
@@ -302,7 +323,7 @@ impl App {
             f.render_widget(
                 Paragraph::new(Text::from(vec![
                     Line::raw("Are you sure to delete?"),
-                    Line::raw(format!("\"{}\"", task_title)),
+                    Line::raw(format!("\"{}\"", title)),
                     Line::raw(""),
                     Line::raw("(Y) Yes / (N) No"),
                 ]))
@@ -328,9 +349,10 @@ impl App {
         }
 
         let block: Block = match self.view_mode {
-            ViewMode::ViewProjects | ViewMode::AddProject | ViewMode::RenameProject => {
-                Block::bordered()
-            }
+            ViewMode::ViewProjects
+            | ViewMode::AddProject
+            | ViewMode::RenameProject
+            | ViewMode::DeleteProject => Block::bordered(),
             _ => {
                 let project_title = self.projects[self.selected_project_index.selected().unwrap()]
                     .title
@@ -401,6 +423,7 @@ impl App {
             ViewMode::ViewProjects => return &mut self.selected_project_index,
             ViewMode::RenameProject => return &mut self.selected_project_index,
             ViewMode::AddProject => return &mut self.selected_project_index,
+            ViewMode::DeleteProject => return &mut self.selected_project_index,
 
             ViewMode::ViewTasks => return &mut self.selected_task_index,
             ViewMode::RenameTask => return &mut self.selected_task_index,
