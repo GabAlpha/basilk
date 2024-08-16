@@ -48,17 +48,28 @@ impl Project {
                 (done_tasks.len() * 100) / tasks.len()
             };
 
-            let indicator: Vec<&str> = vec![0; percentage / 10].iter().map(|_v| "-").collect();
-
-            let mut lines = vec![Line::from(project.title.clone())];
-
-            lines.push(
-                Line::from(Span::raw(format!("{}% {}", percentage, indicator.join("")))).style(
+            let lines = vec![Line::from(vec![
+                Span::raw(format!("[{}/{}] ", done_tasks.len(), tasks.len(),)).style(
                     Style::default()
                         .add_modifier(Modifier::ITALIC)
                         .fg(Project::get_indicator_done_tasks_color(percentage)),
                 ),
-            );
+                Span::raw(project.title.clone()),
+            ])];
+
+            // lines.push(
+            //     Line::from(Span::raw(format!(
+            //         "[{}/{}] {}",
+            //         done_tasks.len(),
+            //         tasks.len(),
+            //         indicator.join("")
+            //     )))
+            //     .style(
+            //         Style::default()
+            //             .add_modifier(Modifier::ITALIC)
+            //             .fg(Project::get_indicator_done_tasks_color(percentage)),
+            //     ),
+            // );
 
             items.push(ListItem::from(lines))
         }

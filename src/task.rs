@@ -1,7 +1,7 @@
 use std::fs;
 
 use ratatui::{
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{ListItem, ListState},
 };
@@ -76,12 +76,21 @@ impl Task {
         items.clear();
 
         for task in tasks.iter() {
+            let modifier = if task.status == TASK_STATUS_DONE {
+                Modifier::CROSSED_OUT
+            } else {
+                Modifier::empty()
+            };
+
             let line = Line::from(vec![
                 Span::styled(
                     format!("[{}] ", task.status),
-                    Style::new().fg(Task::get_status_color(&task.status)),
+                    Style::default()
+                        .fg(Task::get_status_color(&task.status))
+                        .add_modifier(Modifier::ITALIC)
+                        .add_modifier(modifier),
                 ),
-                Span::raw(task.title.clone()),
+                Span::styled(task.title.clone(), Style::default().add_modifier(modifier)),
             ]);
 
             items.push(ListItem::from(line))
