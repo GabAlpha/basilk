@@ -110,4 +110,17 @@ impl Task {
         app.projects = App::read_json();
         Task::load(app, items)
     }
+
+    pub fn delete(app: &mut App, items: &mut Vec<ListItem>) {
+        let mut internal_projects = app.projects.clone();
+
+        internal_projects[app.selected_project_index.selected().unwrap()]
+            .tasks
+            .remove(app.selected_task_index.selected().unwrap());
+
+        fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
+
+        app.projects = App::read_json();
+        Task::load(app, items)
+    }
 }

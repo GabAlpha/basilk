@@ -38,6 +38,7 @@ pub enum ViewMode {
     RenameTask,
     ChangeStatusTask,
     AddTask,
+    DeleteTask,
 }
 
 pub struct App {
@@ -193,6 +194,7 @@ impl App {
                             input.reset();
                             self.view_mode = ViewMode::AddTask
                         }
+                        Char('d') => self.view_mode = ViewMode::DeleteTask,
                         Char('q') => return Ok(()),
                         Down => self.next(&items),
                         Up => self.previous(&items),
@@ -247,6 +249,17 @@ impl App {
                             input.handle_event(&Event::Key(key));
                         }
                     },
+                    ViewMode::DeleteTask => match key.code {
+                        Char('y') => {
+                            Task::delete(self, &mut items);
+
+                            self.view_mode = ViewMode::ViewTasks;
+                            self.selected_task_index.select_previous();
+                        }
+                        Char('n') => self.view_mode = ViewMode::ViewTasks,
+                        Char('q') => return Ok(()),
+                        _ => {}
+                    },
                 }
             }
         }
@@ -274,6 +287,29 @@ impl App {
 
         if self.view_mode == ViewMode::RenameTask || self.view_mode == ViewMode::RenameProject {
             Ui::create_input("Rename", f, area, input)
+        }
+
+        if self.view_mode == ViewMode::DeleteTask {
+            let task_title = &self.projects[self.selected_project_index.selected().unwrap()].tasks
+                [self.selected_task_index.selected().unwrap()]
+            .title;
+
+            let area = Ui::create_rect_area(20, 6, area);
+
+            let block = Block::bordered().title("Delete");
+
+            f.render_widget(Clear, area); //this clears out the background
+            f.render_widget(
+                Paragraph::new(Text::from(vec![
+                    Line::raw("Are you sure to delete?"),
+                    Line::raw(format!("\"{}\"", task_title)),
+                    Line::raw(""),
+                    Line::raw("(Y) Yes / (N) No"),
+                ]))
+                .alignment(Alignment::Center)
+                .block(block),
+                area,
+            );
         }
 
         if self.view_mode == ViewMode::ChangeStatusTask {
@@ -370,6 +406,7 @@ impl App {
             ViewMode::RenameTask => return &mut self.selected_task_index,
             ViewMode::ChangeStatusTask => return &mut self.selected_status_task_index,
             ViewMode::AddTask => return &mut self.selected_task_index,
+            ViewMode::DeleteTask => return &mut self.selected_task_index,
         };
     }
 }
