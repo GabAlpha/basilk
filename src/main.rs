@@ -218,23 +218,9 @@ impl App {
         }
 
         if self.view_mode == ViewMode::ChangeStatusTask {
-            let selected_task = self.projects[self.selected_project_index.selected().unwrap()]
-                .tasks[self.selected_task_index.selected().unwrap()]
-            .clone();
+            let area = Ui::create_rect_area(20, 5, area);
 
-            let title = format!("Status: {}", selected_task.title);
-
-            let area = Ui::create_rect_area(
-                if title.len() > 100 {
-                    90
-                } else {
-                    title.len() + 5
-                } as u16,
-                5,
-                area,
-            );
-
-            let block = Block::bordered().title(title);
+            let block = Block::bordered().title("Status");
 
             let list_widget = List::new(status_items.clone())
                 .highlight_style(Style::default().add_modifier(Modifier::BOLD))
