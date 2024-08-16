@@ -30,7 +30,8 @@ impl Project {
             _ => return Color::White,
         }
     }
-    pub fn load(app: &mut App, items: &mut Vec<ListItem>) {
+
+    pub fn load_items(app: &mut App, items: &mut Vec<ListItem>) {
         items.clear();
 
         for project in app.projects.iter() {
@@ -61,6 +62,11 @@ impl Project {
         }
     }
 
+    pub fn reload(app: &mut App, items: &mut Vec<ListItem>) {
+        app.projects = App::read_json();
+        Project::load_items(app, items)
+    }
+
     pub fn get_current(app: &mut App) -> &Project {
         return &app.projects[app.selected_project_index.selected().unwrap()];
     }
@@ -80,8 +86,7 @@ impl Project {
 
         fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
 
-        app.projects = App::read_json();
-        Project::load(app, items)
+        Project::reload(app, items)
     }
 
     pub fn rename(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
@@ -91,8 +96,7 @@ impl Project {
 
         fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
 
-        app.projects = App::read_json();
-        Project::load(app, items)
+        Project::reload(app, items)
     }
 
     pub fn delete(app: &mut App, items: &mut Vec<ListItem>) {
@@ -102,7 +106,6 @@ impl Project {
 
         fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
 
-        app.projects = App::read_json();
-        Project::load(app, items)
+        Project::reload(app, items)
     }
 }

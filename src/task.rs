@@ -3,7 +3,7 @@ use std::fs;
 use ratatui::{
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{ListItem, ListState},
+    widgets::ListItem,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::to_string;
@@ -36,7 +36,7 @@ impl Task {
         }
     }
 
-    pub fn load_statues(items: &mut Vec<ListItem>) {
+    pub fn load_statues_items(items: &mut Vec<ListItem>) {
         items.clear();
 
         for status in TASK_STATUSES {
@@ -49,7 +49,7 @@ impl Task {
         }
     }
 
-    pub fn load(app: &mut App, items: &mut Vec<ListItem>) {
+    pub fn load_items(app: &mut App, items: &mut Vec<ListItem>) {
         let tasks = &mut app.projects[app.selected_project_index.selected().unwrap()].tasks;
 
         let last_task_title_selected = tasks
@@ -96,7 +96,12 @@ impl Task {
             items.push(ListItem::from(line))
         }
 
-        app.selected_task_index = ListState::default().with_selected(Some(new_index))
+        app.selected_task_index.select(Some(new_index))
+    }
+
+    pub fn reload(app: &mut App, items: &mut Vec<ListItem>) {
+        app.projects = App::read_json();
+        Task::load_items(app, items)
     }
 
     pub fn get_all(app: &App) -> &Vec<Task> {
@@ -125,8 +130,7 @@ impl Task {
 
         fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
 
-        app.projects = App::read_json();
-        Task::load(app, items)
+        Task::reload(app, items)
     }
 
     pub fn rename(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
@@ -138,8 +142,7 @@ impl Task {
 
         fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
 
-        app.projects = App::read_json();
-        Task::load(app, items)
+        Task::reload(app, items)
     }
 
     pub fn change_status(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
@@ -151,8 +154,7 @@ impl Task {
 
         fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
 
-        app.projects = App::read_json();
-        Task::load(app, items)
+        Task::reload(app, items)
     }
 
     pub fn delete(app: &mut App, items: &mut Vec<ListItem>) {
@@ -164,7 +166,6 @@ impl Task {
 
         fs::write(PATH_JSON, to_string(&internal_projects).unwrap()).unwrap();
 
-        app.projects = App::read_json();
-        Task::load(app, items)
+        Task::reload(app, items)
     }
 }

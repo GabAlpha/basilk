@@ -97,10 +97,10 @@ impl App {
         let mut input = Input::default();
 
         let mut items: Vec<ListItem> = vec![];
-        Project::load(self, &mut items);
+        Project::load_items(self, &mut items);
 
         let mut status_items: Vec<ListItem> = vec![];
-        Task::load_statues(&mut status_items);
+        Task::load_statues_items(&mut status_items);
 
         loop {
             terminal.draw(|f| self.render(f, f.size(), &input, &items, &status_items))?;
@@ -110,7 +110,7 @@ impl App {
                 match self.view_mode {
                     ViewMode::ViewProjects => match key.code {
                         Enter | Right => {
-                            Task::load(self, &mut items);
+                            Task::load_items(self, &mut items);
                             self.selected_task_index.select(Some(0));
 
                             App::change_view(self, ViewMode::ViewTasks);
@@ -196,7 +196,7 @@ impl App {
 
                     ViewMode::ViewTasks => match key.code {
                         Esc | Left => {
-                            Project::load(self, &mut items);
+                            Project::load_items(self, &mut items);
 
                             App::change_view(self, ViewMode::ViewProjects);
                         }
