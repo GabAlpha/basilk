@@ -169,7 +169,10 @@ impl App {
 
                             self.view_mode = ViewMode::RenameTask
                         }
-                        Char('n') => self.view_mode = ViewMode::AddTask,
+                        Char('n') => {
+                            input.reset();
+                            self.view_mode = ViewMode::AddTask
+                        }
                         Char('q') => return Ok(()),
                         Down => self.next(&items),
                         Up => self.previous(&items),
@@ -210,7 +213,14 @@ impl App {
                     ViewMode::AddTask => match key.code {
                         Enter => {
                             Task::create(self, &mut items, input.value());
-                            self.view_mode = ViewMode::ViewTasks
+
+                            let tasks = &self.projects
+                                [self.selected_project_index.selected().unwrap()]
+                            .tasks;
+
+                            self.view_mode = ViewMode::ViewTasks;
+                            self.selected_task_index =
+                                ListState::default().with_selected(Some(tasks.len()))
                         }
                         Esc => self.view_mode = ViewMode::ViewTasks,
                         _ => {
