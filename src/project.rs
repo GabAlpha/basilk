@@ -1,7 +1,7 @@
 use std::fs;
 
 use ratatui::{
-    style::{Color, Modifier, Style},
+    style::{Color, Style},
     text::{Line, Span},
     widgets::ListItem,
 };
@@ -51,9 +51,7 @@ impl Project {
 
             let lines = vec![Line::from(vec![
                 Span::raw(format!("[{}/{}] ", done_tasks.len(), tasks.len(),)).style(
-                    Style::default()
-                        .add_modifier(Modifier::ITALIC)
-                        .fg(Project::get_indicator_done_tasks_color(percentage)),
+                    Style::default().fg(Project::get_indicator_done_tasks_color(percentage)),
                 ),
                 Span::raw(project.title.clone()),
             ])];

@@ -87,7 +87,6 @@ impl Task {
                     format!("[{}] ", task.status),
                     Style::default()
                         .fg(Task::get_status_color(&task.status))
-                        .add_modifier(Modifier::ITALIC)
                         .add_modifier(modifier),
                 ),
                 Span::styled(task.title.clone(), Style::default().add_modifier(modifier)),
