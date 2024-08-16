@@ -349,22 +349,13 @@ impl App {
                 _ => "",
             };
 
-            let area = Ui::create_rect_area(20, 6, area);
-
-            let block = Block::bordered().title("Delete");
-
-            f.render_widget(Clear, area); //this clears out the background
-            f.render_widget(
-                Paragraph::new(Text::from(vec![
-                    Line::raw("Are you sure to delete?"),
-                    Line::raw(format!("\"{}\"", title)),
-                    Line::raw(""),
-                    Line::raw("(Y) Yes / (N) No"),
-                ]))
-                .alignment(Alignment::Center)
-                .block(block),
+            Ui::create_question_modal(
+                "Are you sure to delete?",
+                format!("\"{}\"", title).as_str(),
+                "Delete",
+                f,
                 area,
-            );
+            )
         }
 
         if self.view_mode == ViewMode::ChangeStatusTask {
@@ -372,14 +363,14 @@ impl App {
 
             let block = Block::bordered().title("Status");
 
-            let list_widget = List::new(status_items.clone())
+            let task_status_list_widget = List::new(status_items.clone())
                 .highlight_style(Style::default().add_modifier(Modifier::BOLD))
                 .highlight_symbol("> ")
                 .highlight_spacing(HighlightSpacing::Always)
                 .block(block);
 
             f.render_widget(Clear, area);
-            f.render_stateful_widget(list_widget, area, self.use_state())
+            f.render_stateful_widget(task_status_list_widget, area, self.use_state())
         }
 
         let block: Block = match self.view_mode {

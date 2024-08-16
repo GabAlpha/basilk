@@ -1,5 +1,6 @@
 use ratatui::{
-    layout::{Constraint, Layout, Rect},
+    layout::{Alignment, Constraint, Layout, Rect},
+    text::{Line, Text},
     widgets::{Block, Borders, Clear, Paragraph},
     Frame,
 };
@@ -43,5 +44,28 @@ impl Ui {
             // Move one line down, from the border to the input line
             area.y + 1,
         )
+    }
+
+    pub fn create_question_modal(
+        text_first_line: &str,
+        text_second_line: &str,
+        title: &str,
+        f: &mut Frame,
+        area: Rect,
+    ) {
+        let area = Ui::create_rect_area(20, 6, area);
+
+        f.render_widget(Clear, area); //this clears out the background
+        f.render_widget(
+            Paragraph::new(Text::from(vec![
+                Line::raw(text_first_line),
+                Line::raw(text_second_line),
+                Line::raw(""),
+                Line::raw("(Y) Yes / (N) No"),
+            ]))
+            .alignment(Alignment::Center)
+            .block(Block::bordered().title(title)),
+            area,
+        );
     }
 }
