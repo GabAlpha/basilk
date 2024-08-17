@@ -15,8 +15,8 @@ use ratatui::{
 };
 use tui_input::{backend::crossterm::EventHandler, Input};
 
-mod config;
 mod json;
+mod migration;
 mod project;
 mod task;
 mod ui;

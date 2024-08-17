@@ -11,6 +11,7 @@ use crate::{json::Json, App};
 pub struct Task {
     pub title: String,
     pub status: String,
+    pub priority: u16,
 }
 
 pub const TASK_STATUS_DONE: &str = "Done";
@@ -55,6 +56,7 @@ impl Task {
             .unwrap_or(&Task {
                 title: "".to_string(),
                 status: "".to_string(),
+                priority: 0,
             })
             .clone()
             .title;
@@ -117,6 +119,7 @@ impl Task {
         let new_task = Task {
             title: value.to_string(),
             status: TASK_STATUS_UP_NEXT.to_string(),
+            priority: 0,
         };
 
         let mut internal_projects = app.projects.clone();
