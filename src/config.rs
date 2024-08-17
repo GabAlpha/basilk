@@ -1,1 +1,1 @@
-pub static PATH_JSON: &'static str = "main2.json";
+pub static JSON_VERSIONS: [&str; 2] = ["6ad96", "aabbc"];

@@ -69,6 +69,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
     let terminal = init_terminal()?;
 
+    // Check the version of the json file
+    Json::check()?;
+
     // create app and run it
     App::setup().run(terminal)?;
 
