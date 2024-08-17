@@ -53,15 +53,13 @@ impl Ui {
         f: &mut Frame,
         area: Rect,
     ) {
-        let area = Ui::create_rect_area(20, 6, area);
+        let area = Ui::create_rect_area(20, 4, area);
 
         f.render_widget(Clear, area); //this clears out the background
         f.render_widget(
             Paragraph::new(Text::from(vec![
                 Line::raw(text_first_line),
                 Line::raw(text_second_line),
-                Line::raw(""),
-                Line::raw("(Y) Yes / (N) No"),
             ]))
             .alignment(Alignment::Center)
             .block(Block::bordered().title(title)),

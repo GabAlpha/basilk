@@ -1,6 +1,7 @@
 use ratatui::{
     layout::Rect,
     style::{Modifier, Style},
+    text::Line,
     widgets::{Block, Clear, HighlightSpacing, List, ListItem},
     Frame,
 };
@@ -11,8 +12,8 @@ use crate::{project::Project, task::Task, ui::Ui, util::Util, App, ViewMode};
 pub struct View {}
 
 impl View {
-    pub fn show_add_modal(f: &mut Frame, area: Rect, input: &Input) {
-        Ui::create_input("Add", f, area, input)
+    pub fn show_new_modal(f: &mut Frame, area: Rect, input: &Input) {
+        Ui::create_input("New", f, area, input)
     }
 
     pub fn show_rename_modal(f: &mut Frame, area: Rect, input: &Input) {
@@ -77,5 +78,29 @@ impl View {
         } else {
             f.render_widget(items, area)
         }
+    }
+
+    pub fn show_footer_helper(app: &mut App, f: &mut Frame, area: Rect) {
+        let help_string = match app.view_mode {
+            ViewMode::ViewProjects => {
+                "<Up/Down> next/prev - <Enter> go to tasks - <n> new - <r> rename - <d> delete"
+            }
+            ViewMode::RenameProject => "<Enter> confirm - <Esc> cancel",
+            ViewMode::AddProject => "<Enter> confirm - <Esc> cancel",
+            ViewMode::DeleteProject => "<y> confirm - <n> cancel",
+
+            ViewMode::ViewTasks => {
+                "<Up/Down> next/prev - <Enter> change status - <n> new - <r> rename - <d> delete"
+            }
+            ViewMode::RenameTask => "<Enter> confirm - <Esc> cancel",
+            ViewMode::ChangeStatusTask => "<Up/Down> next/prev - <Enter> confirm - <Esc> cancel",
+            ViewMode::AddTask => "<Enter> confirm - <Esc> cancel",
+            ViewMode::DeleteTask => "<y> confirm - <n> cancel",
+        };
+
+        f.render_widget(
+            Block::new().title_bottom(Line::from(help_string).centered()),
+            area,
+        );
     }
 }

@@ -351,15 +351,15 @@ impl App {
     ) {
         // Create a space for header, todo list and the footer.
         let vertical = Layout::vertical([
-            Constraint::Max(1),
-            Constraint::Percentage(80),
-            Constraint::Max(5),
+            Constraint::Percentage(2),
+            Constraint::Percentage(93),
+            Constraint::Percentage(5),
         ]);
 
         let [header_area, rest_area, footer_area] = vertical.areas(area);
 
         if self.view_mode == ViewMode::AddTask || self.view_mode == ViewMode::AddProject {
-            View::show_add_modal(f, area, input)
+            View::show_new_modal(f, area, input)
         }
 
         if self.view_mode == ViewMode::RenameTask || self.view_mode == ViewMode::RenameProject {
@@ -374,11 +374,11 @@ impl App {
             View::show_select_task_status_modal(self, status_items, f, area)
         }
 
-        f.render_widget(
-            Paragraph::new(" :: Basil :: ").alignment(Alignment::Center),
-            header_area,
-        );
+        f.render_widget(Paragraph::new(":: Basil ::").centered(), header_area);
+
         View::show_items(self, items, f, rest_area);
+
+        View::show_footer_helper(self, f, footer_area)
     }
 
     fn next(&mut self, items: &Vec<ListItem>) -> () {
