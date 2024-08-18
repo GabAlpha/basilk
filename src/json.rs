@@ -2,7 +2,7 @@ use std::{
     error::Error,
     fs::{self, File},
     io::Write,
-    path::Path,
+    path::{Path, PathBuf},
     sync::Mutex,
 };
 
@@ -15,14 +15,28 @@ use crate::{
 
 pub struct Json;
 
+static DIR_CONFIG_NAME: &str = "basil";
 static VERSION: Mutex<String> = Mutex::new(String::new());
 
 impl Json {
-    fn get_json_path(version: String) -> String {
-        format!("{}.json", version)
+    fn get_dir_path() -> PathBuf {
+        let mut path = dirs::config_dir().unwrap();
+        path.push(DIR_CONFIG_NAME);
+
+        return path;
+    }
+
+    fn get_json_path(version: String) -> PathBuf {
+        let mut path = PathBuf::new();
+        path.push(Json::get_dir_path().as_path());
+        path.push(format!("{version}.json"));
+
+        return path;
     }
 
     pub fn check() -> Result<(), Box<dyn Error>> {
+        fs::create_dir_all(Json::get_dir_path())?;
+
         // Create the state to save the json version
         let mut version_state = VERSION.lock().unwrap();
 
