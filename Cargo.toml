@@ -2,6 +2,12 @@
 name = "basil"
 version = "0.1.0"
 edition = "2021"
+readme = "README.md"
+homepage = "https://github.com/GabAlpha/basil"
+repository = "https://github.com/GabAlpha/basil"
+keywords = ["tui", "kanban", "tasks", "ratatui", "terminal"]
+categories = ["command-line-utilities"]
+default-run = "basil"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
