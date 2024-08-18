@@ -291,9 +291,6 @@ impl App {
                         Enter => {
                             Task::create(self, &mut items, input.value());
 
-                            let tasks = Task::get_all(self);
-                            self.selected_task_index.select(Some(tasks.len()));
-
                             App::change_view(self, ViewMode::ViewTasks);
                         }
                         Esc => {
