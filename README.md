@@ -7,7 +7,7 @@
 <img src="./assets/basil.gif"></img>
 
 ## History
-It was a very hot August night, and I was organizing my activities when at a certain point I felt the need for a software that could help me with this, something simple and portable. **basil** is created as a summer project to learn Rust and to be able to use the software anywhere.
+It was a [very hot August night](https://www.meteo.it/notizie/meteo-caldo-in-aumento-la-tendenza-verso-ferragosto-c95aa7dc), and I was organizing my activities when at a certain point I felt the need for a software that could help me with this, something simple and portable. **basil** is created as a summer project to learn Rust and to be able to use the software anywhere. The name comes from the basil plant, [easy and simple](https://www.rhs.org.uk/herbs/basil/grow-your-own) to grow and maintain.
 
 ## About
 **basil** is structured to create projects and within each project, to create activities with a specific status.
