@@ -2,6 +2,7 @@
 name = "basil"
 version = "0.1.0"
 edition = "2021"
+authors = ["Gabriele Alfarano <gabalpha@outlook.it>"]
 readme = "README.md"
 homepage = "https://github.com/GabAlpha/basil"
 repository = "https://github.com/GabAlpha/basil"
