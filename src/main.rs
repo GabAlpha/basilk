@@ -163,9 +163,6 @@ impl App {
 
                             App::change_view(self, ViewMode::ViewProjects);
                         }
-                        Char('q') => {
-                            return Ok(());
-                        }
                         _ => {
                             input.handle_event(&Event::Key(key));
                         }
@@ -181,9 +178,6 @@ impl App {
 
                             App::change_view(self, ViewMode::ViewProjects);
                         }
-                        Char('q') => {
-                            return Ok(());
-                        }
                         _ => {
                             input.handle_event(&Event::Key(key));
                         }
@@ -197,9 +191,6 @@ impl App {
                         }
                         Char('n') => {
                             App::change_view(self, ViewMode::ViewProjects);
-                        }
-                        Char('q') => {
-                            return Ok(());
                         }
                         _ => {}
                     },
@@ -270,9 +261,6 @@ impl App {
 
                             App::change_view(self, ViewMode::ViewTasks);
                         }
-                        Char('q') => {
-                            return Ok(());
-                        }
                         _ => {
                             input.handle_event(&Event::Key(key));
                         }
@@ -297,9 +285,6 @@ impl App {
                         Esc => {
                             App::change_view(self, ViewMode::ViewTasks);
                         }
-                        Char('q') => {
-                            return Ok(());
-                        }
                         _ => {}
                     },
                     ViewMode::AddTask => match key.code {
@@ -314,9 +299,6 @@ impl App {
                         Esc => {
                             App::change_view(self, ViewMode::ViewTasks);
                         }
-                        Char('q') => {
-                            return Ok(());
-                        }
                         _ => {
                             input.handle_event(&Event::Key(key));
                         }
@@ -330,9 +312,6 @@ impl App {
                         }
                         Char('n') => {
                             App::change_view(self, ViewMode::ViewTasks);
-                        }
-                        Char('q') => {
-                            return Ok(());
                         }
                         _ => {}
                     },

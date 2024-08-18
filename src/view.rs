@@ -83,14 +83,14 @@ impl View {
     pub fn show_footer_helper(app: &mut App, f: &mut Frame, area: Rect) {
         let help_string = match app.view_mode {
             ViewMode::ViewProjects => {
-                "<Up/Down> next/prev - <Enter/Right> go to tasks - <n> new - <r> rename - <d> delete"
+                "<Up/Down> next/prev - <Enter/Right> go to tasks - <n> new - <r> rename - <d> delete - <q> quit"
             }
             ViewMode::RenameProject => "<Enter> confirm - <Esc> cancel",
             ViewMode::AddProject => "<Enter> confirm - <Esc> cancel",
             ViewMode::DeleteProject => "<y> confirm - <n> cancel",
 
             ViewMode::ViewTasks => {
-                "<Up/Down> next/prev - <Esc/Left> go to projects - <Enter> change status - <n> new - <r> rename - <d> delete"
+                "<Up/Down> next/prev - <Esc/Left> go to projects - <Enter> change status - <n> new - <r> rename - <d> delete - <q> quit"
             }
             ViewMode::RenameTask => "<Enter> confirm - <Esc> cancel",
             ViewMode::ChangeStatusTask => "<Up/Down> next/prev - <Enter> confirm - <Esc> cancel",
