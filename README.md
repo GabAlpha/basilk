@@ -14,7 +14,7 @@ The name [_/ˈbæzəlkeɪ/_](./assets/basil-k.wav) comes from the basil plant, w
 <details>
 <summary>Another story</summary>
 
-<p align="center"><img src="./assets/4.jpg" width=240></img></p>
+<p align="center"><img src="./assets/bas-silk.jpg" width=240></img></p>
 <p align="center"><i>illustration generated using <a href="https://perchance.org/ai-pixel-art-generator">perchance.org</a></i></p>
 
 The name [_/ˈbæzsɪlk/_](./assets/bas-silk.wav) comes from the union of basil and silk as a symbol of elaborateness due to its production process.
