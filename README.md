@@ -52,6 +52,9 @@ basilk
 All available commands are displayed inside
 
 ## Contributing
+> [!NOTE]  
+> This project is now in beta version and is expected to have bugs
+
 As I mentioned above, this is my first project in Rust, so contributions and help are welcome! If you have any suggestions, improvements, or bug fixes, feel free to submit a pull request or open a new issue.
 
 ## License
