@@ -30,6 +30,13 @@ The data structure is saved in `.json` format and is available in the directory:
 The choice to use the JSON format is to make easier to export
 
 ## Installation
+### Cargo
+
+from [crates.io](https://crates.io/crates/basilk) using [`cargo`](https://doc.rust-lang.org/cargo/)
+
+```sh
+cargo install basilk
+```
 
 ### Build from source
 
