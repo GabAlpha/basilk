@@ -2,7 +2,7 @@
 name = "basilk"
 version = "0.1.0"
 edition = "2021"
-description = "A Terminal User Interface (TUI) to manage your tasks with minimal kanban logic<"
+description = "A Terminal User Interface (TUI) to manage your tasks with minimal kanban logic"
 license = "MIT OR Apache-2.0"
 authors = ["Gabriele Alfarano <gabalpha@outlook.it>"]
 readme = "README.md"
