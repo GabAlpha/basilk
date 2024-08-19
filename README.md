@@ -2,14 +2,14 @@
 <p align="center"><i>illustration generated using <a href="https://perchance.org/ai-pixel-art-generator">perchance.org</a></i></p>
 
 <h1 align="center">basilk</h1>
-<p align="center">A Terminal User Interface (TUI) to manage your tasks with the simplest kanban logic</p>
+<p align="center">A Terminal User Interface (TUI) to manage your tasks with minimal kanban logic</p>
 
 <img src="./assets/basilk.gif"></img>
 
 ## History
 It was a [very hot August night](https://www.meteo.it/notizie/meteo-caldo-in-aumento-la-tendenza-verso-ferragosto-c95aa7dc), and I was organizing my activities when at a certain point I felt the need for a software that could help me with this, something simple and portable. **basilk** is created as a summer project to learn Rust and to be able to use the software anywhere. 
 
-The name [_/ˈbæzəlkeɪ/_](./assets/basil-k.wav?raw=1) comes from the basil plant, which is easy and simple to grow and maintain, and "k" stands for kanban.
+The name [_/ˈbæzəlkeɪ/_](./assets/basil-k.wav?raw=1) comes from the basil plant, which is easy to grow and maintain, and "k" stands for kanban.
 
 <details>
 <summary>Another story</summary>
@@ -21,13 +21,13 @@ The name [_/ˈbæzsɪlk/_](./assets/bas-silk.wav?raw=1) comes from the union of 
 </details>
 
 ## About
-**basilk** is structured to create projects and within each project, to create tasks with a specific status (Up Next/On Going/Done).
+**basilk** is structured to create projects and within each project to create tasks with a specific status (Up Next/On Going/Done).
 
-The database is saved in `.json` format and is available in the directory:
+The data structure is saved in `.json` format and is available in the directory:
 ```
 ~/.config/basilk
 ```
-The choice to use the json format is to make the structure easier to export.
+The choice to use the JSON format is to make easier to export
 
 ## Installation
 
