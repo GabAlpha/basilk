@@ -9,7 +9,7 @@
 ## History
 It was a [very hot August night](https://www.meteo.it/notizie/meteo-caldo-in-aumento-la-tendenza-verso-ferragosto-c95aa7dc), and I was organizing my activities when at a certain point I felt the need for a software that could help me with this, something simple and portable. **basilk** is created as a summer project to learn Rust and to be able to use the software anywhere. 
 
-The name [_/ˈbæzəlkeɪ/_](./assets/basil-k.wav) comes from the basil plant, which is easy and simple to grow and maintain, and "k" stands for kanban.
+The name [_/ˈbæzəlkeɪ/_](./assets/basil-k.wav?raw=1) comes from the basil plant, which is easy and simple to grow and maintain, and "k" stands for kanban.
 
 <details>
 <summary>Another story</summary>
@@ -17,7 +17,7 @@ The name [_/ˈbæzəlkeɪ/_](./assets/basil-k.wav) comes from the basil plant, w
 <p align="center"><img src="./assets/bas-silk.jpg" width=240></img></p>
 <p align="center"><i>illustration generated using <a href="https://perchance.org/ai-pixel-art-generator">perchance.org</a></i></p>
 
-The name [_/ˈbæzsɪlk/_](./assets/bas-silk.wav) comes from the union of basil and silk as a symbol of elaborateness due to its production process.
+The name [_/ˈbæzsɪlk/_](./assets/bas-silk.wav?raw=1) comes from the union of basil and silk as a symbol of elaborateness due to its production process.
 </details>
 
 ## About
