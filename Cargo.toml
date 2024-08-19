@@ -1,16 +1,16 @@
 [package]
-name = "basil"
+name = "basilk"
 version = "0.1.0"
 edition = "2021"
 description = "A Terminal User Interface (TUI) to manage your tasks with the simplest kanban logic"
 license = "MIT OR Apache-2.0"
 authors = ["Gabriele Alfarano <gabalpha@outlook.it>"]
 readme = "README.md"
-homepage = "https://github.com/GabAlpha/basil"
-repository = "https://github.com/GabAlpha/basil"
+homepage = "https://github.com/GabAlpha/basilk"
+repository = "https://github.com/GabAlpha/basilk"
 keywords = ["tui", "kanban", "tasks", "ratatui", "terminal"]
 categories = ["command-line-utilities"]
-default-run = "basil"
+default-run = "basilk"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

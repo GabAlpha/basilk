@@ -15,7 +15,7 @@ use crate::{
 
 pub struct Json;
 
-static DIR_CONFIG_NAME: &str = "basil";
+static DIR_CONFIG_NAME: &str = env!("CARGO_PKG_NAME");
 static VERSION: Mutex<String> = Mutex::new(String::new());
 
 impl Json {

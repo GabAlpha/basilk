@@ -350,7 +350,10 @@ impl App {
             View::show_select_task_status_modal(self, status_items, f, area)
         }
 
-        f.render_widget(Paragraph::new(":: Basil ::").centered(), header_area);
+        f.render_widget(
+            Paragraph::new(format!("::{}::", env!("CARGO_PKG_NAME"))).centered(),
+            header_area,
+        );
 
         View::show_items(self, items, f, rest_area);
 
