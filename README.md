@@ -25,7 +25,14 @@ The name [_/ˈbæzsɪlk/_](https://gabalpha.github.io/read-audio/?p=https://gith
 
 The data structure is saved in `.json` format and is available in the directory:
 ```
+Linux
 ~/.config/basilk
+
+macOS
+~/Library/Application Support/basilk
+
+Windows
+<USER>\AppData\Roaming\basilk
 ```
 The choice to use the JSON format is to make easier to export
 
