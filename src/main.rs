@@ -6,7 +6,7 @@ use std::{
 
 use ratatui::{
     crossterm::{
-        event::{self, Event, KeyCode},
+        event::{self, Event, KeyCode, KeyEventKind},
         terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
         ExecutableCommand,
     },
@@ -104,214 +104,218 @@ impl App {
             terminal.draw(|f| self.render(f, f.size(), &input, &items, &status_items))?;
 
             if let Event::Key(key) = event::read()? {
-                use KeyCode::*;
-                match self.view_mode {
-                    ViewMode::ViewProjects => match key.code {
-                        Enter | Right => {
-                            if items.is_empty() {
-                                continue;
+                // Capture only the "Press" event to prevent double input on Windows
+                if key.kind == KeyEventKind::Press {
+                    use KeyCode::*;
+                    match self.view_mode {
+                        ViewMode::ViewProjects => match key.code {
+                            Enter | Right => {
+                                if items.is_empty() {
+                                    continue;
+                                }
+
+                                Task::load_items(self, &mut items);
+                                self.selected_task_index.select(Some(0));
+
+                                App::change_view(self, ViewMode::ViewTasks);
                             }
+                            Char('r') => {
+                                if items.is_empty() {
+                                    continue;
+                                }
 
-                            Task::load_items(self, &mut items);
-                            self.selected_task_index.select(Some(0));
+                                input = input
+                                    .clone()
+                                    .with_value(Project::get_current(self).title.clone());
 
-                            App::change_view(self, ViewMode::ViewTasks);
-                        }
-                        Char('r') => {
-                            if items.is_empty() {
-                                continue;
+                                App::change_view(self, ViewMode::RenameProject);
                             }
+                            Char('n') => {
+                                input.reset();
 
-                            input = input
-                                .clone()
-                                .with_value(Project::get_current(self).title.clone());
-
-                            App::change_view(self, ViewMode::RenameProject);
-                        }
-                        Char('n') => {
-                            input.reset();
-
-                            App::change_view(self, ViewMode::AddProject);
-                        }
-                        Char('d') => {
-                            if items.is_empty() {
-                                continue;
+                                App::change_view(self, ViewMode::AddProject);
                             }
+                            Char('d') => {
+                                if items.is_empty() {
+                                    continue;
+                                }
 
-                            App::change_view(self, ViewMode::DeleteProject);
-                        }
-                        Down => {
-                            self.next(&items);
-                        }
-                        Up => {
-                            self.previous(&items);
-                        }
-                        Char('q') => {
-                            return Ok(());
-                        }
-                        _ => {}
-                    },
-                    ViewMode::RenameProject => match key.code {
-                        Enter => {
-                            Project::rename(self, &mut items, input.value());
-                            input.reset();
-
-                            App::change_view(self, ViewMode::ViewProjects);
-                        }
-                        Esc => {
-                            input.reset();
-
-                            App::change_view(self, ViewMode::ViewProjects);
-                        }
-                        _ => {
-                            input.handle_event(&Event::Key(key));
-                        }
-                    },
-                    ViewMode::AddProject => match key.code {
-                        Esc => {
-                            App::change_view(self, ViewMode::ViewProjects);
-                        }
-                        Enter => {
-                            Project::create(self, &mut items, input.value());
-                            self.selected_project_index
-                                .select(Some(self.projects.len()));
-
-                            App::change_view(self, ViewMode::ViewProjects);
-                        }
-                        _ => {
-                            input.handle_event(&Event::Key(key));
-                        }
-                    },
-                    ViewMode::DeleteProject => match key.code {
-                        Char('y') => {
-                            Project::delete(self, &mut items);
-                            self.selected_project_index.select_previous();
-
-                            App::change_view(self, ViewMode::ViewProjects);
-                        }
-                        Char('n') => {
-                            App::change_view(self, ViewMode::ViewProjects);
-                        }
-                        _ => {}
-                    },
-
-                    ViewMode::ViewTasks => match key.code {
-                        Esc | Left => {
-                            Project::load_items(self, &mut items);
-
-                            App::change_view(self, ViewMode::ViewProjects);
-                        }
-                        Enter => {
-                            if items.is_empty() {
-                                continue;
+                                App::change_view(self, ViewMode::DeleteProject);
                             }
-
-                            let index = TASK_STATUSES
-                                .into_iter()
-                                .position(|t| t == &Task::get_current(self).status)
-                                .unwrap();
-
-                            self.selected_status_task_index.select(Some(index));
-
-                            App::change_view(self, ViewMode::ChangeStatusTask);
-                        }
-                        Char('r') => {
-                            if items.is_empty() {
-                                continue;
+                            Down => {
+                                self.next(&items);
                             }
-
-                            input = input
-                                .clone()
-                                .with_value(Task::get_current(self).title.clone());
-
-                            App::change_view(self, ViewMode::RenameTask);
-                        }
-                        Char('n') => {
-                            input.reset();
-
-                            App::change_view(self, ViewMode::AddTask);
-                        }
-                        Char('d') => {
-                            if items.is_empty() {
-                                continue;
+                            Up => {
+                                self.previous(&items);
                             }
+                            Char('q') => {
+                                return Ok(());
+                            }
+                            _ => {}
+                        },
+                        ViewMode::RenameProject => match key.code {
+                            Enter => {
+                                Project::rename(self, &mut items, input.value());
+                                input.reset();
 
-                            App::change_view(self, ViewMode::DeleteTask);
-                        }
-                        Down => {
-                            self.next(&items);
-                        }
-                        Up => {
-                            self.previous(&items);
-                        }
-                        Char('q') => {
-                            return Ok(());
-                        }
-                        _ => {}
-                    },
-                    ViewMode::RenameTask => match key.code {
-                        Enter => {
-                            Task::rename(self, &mut items, input.value());
-                            input.reset();
+                                App::change_view(self, ViewMode::ViewProjects);
+                            }
+                            Esc => {
+                                input.reset();
 
-                            App::change_view(self, ViewMode::ViewTasks);
-                        }
-                        Esc => {
-                            input.reset();
+                                App::change_view(self, ViewMode::ViewProjects);
+                            }
+                            _ => {
+                                input.handle_event(&Event::Key(key));
+                            }
+                        },
+                        ViewMode::AddProject => match key.code {
+                            Esc => {
+                                App::change_view(self, ViewMode::ViewProjects);
+                            }
+                            Enter => {
+                                Project::create(self, &mut items, input.value());
+                                self.selected_project_index
+                                    .select(Some(self.projects.len()));
 
-                            App::change_view(self, ViewMode::ViewTasks);
-                        }
-                        _ => {
-                            input.handle_event(&Event::Key(key));
-                        }
-                    },
-                    ViewMode::ChangeStatusTask => match key.code {
-                        Enter => {
-                            Task::change_status(
-                                self,
-                                &mut items,
-                                TASK_STATUSES[self.selected_status_task_index.selected().unwrap()],
-                            );
+                                App::change_view(self, ViewMode::ViewProjects);
+                            }
+                            _ => {
+                                input.handle_event(&Event::Key(key));
+                            }
+                        },
+                        ViewMode::DeleteProject => match key.code {
+                            Char('y') => {
+                                Project::delete(self, &mut items);
+                                self.selected_project_index.select_previous();
 
-                            self.selected_status_task_index.select(Some(0));
-                            App::change_view(self, ViewMode::ViewTasks);
-                        }
-                        Down => {
-                            self.next(&status_items);
-                        }
-                        Up => {
-                            self.previous(&status_items);
-                        }
-                        Esc => {
-                            App::change_view(self, ViewMode::ViewTasks);
-                        }
-                        _ => {}
-                    },
-                    ViewMode::AddTask => match key.code {
-                        Enter => {
-                            Task::create(self, &mut items, input.value());
+                                App::change_view(self, ViewMode::ViewProjects);
+                            }
+                            Char('n') => {
+                                App::change_view(self, ViewMode::ViewProjects);
+                            }
+                            _ => {}
+                        },
 
-                            App::change_view(self, ViewMode::ViewTasks);
-                        }
-                        Esc => {
-                            App::change_view(self, ViewMode::ViewTasks);
-                        }
-                        _ => {
-                            input.handle_event(&Event::Key(key));
-                        }
-                    },
-                    ViewMode::DeleteTask => match key.code {
-                        Char('y') => {
-                            Task::delete(self, &mut items);
-                            self.selected_task_index.select_previous();
+                        ViewMode::ViewTasks => match key.code {
+                            Esc | Left => {
+                                Project::load_items(self, &mut items);
 
-                            App::change_view(self, ViewMode::ViewTasks);
-                        }
-                        Char('n') => {
-                            App::change_view(self, ViewMode::ViewTasks);
-                        }
-                        _ => {}
-                    },
+                                App::change_view(self, ViewMode::ViewProjects);
+                            }
+                            Enter => {
+                                if items.is_empty() {
+                                    continue;
+                                }
+
+                                let index = TASK_STATUSES
+                                    .into_iter()
+                                    .position(|t| t == &Task::get_current(self).status)
+                                    .unwrap();
+
+                                self.selected_status_task_index.select(Some(index));
+
+                                App::change_view(self, ViewMode::ChangeStatusTask);
+                            }
+                            Char('r') => {
+                                if items.is_empty() {
+                                    continue;
+                                }
+
+                                input = input
+                                    .clone()
+                                    .with_value(Task::get_current(self).title.clone());
+
+                                App::change_view(self, ViewMode::RenameTask);
+                            }
+                            Char('n') => {
+                                input.reset();
+
+                                App::change_view(self, ViewMode::AddTask);
+                            }
+                            Char('d') => {
+                                if items.is_empty() {
+                                    continue;
+                                }
+
+                                App::change_view(self, ViewMode::DeleteTask);
+                            }
+                            Down => {
+                                self.next(&items);
+                            }
+                            Up => {
+                                self.previous(&items);
+                            }
+                            Char('q') => {
+                                return Ok(());
+                            }
+                            _ => {}
+                        },
+                        ViewMode::RenameTask => match key.code {
+                            Enter => {
+                                Task::rename(self, &mut items, input.value());
+                                input.reset();
+
+                                App::change_view(self, ViewMode::ViewTasks);
+                            }
+                            Esc => {
+                                input.reset();
+
+                                App::change_view(self, ViewMode::ViewTasks);
+                            }
+                            _ => {
+                                input.handle_event(&Event::Key(key));
+                            }
+                        },
+                        ViewMode::ChangeStatusTask => match key.code {
+                            Enter => {
+                                Task::change_status(
+                                    self,
+                                    &mut items,
+                                    TASK_STATUSES
+                                        [self.selected_status_task_index.selected().unwrap()],
+                                );
+
+                                self.selected_status_task_index.select(Some(0));
+                                App::change_view(self, ViewMode::ViewTasks);
+                            }
+                            Down => {
+                                self.next(&status_items);
+                            }
+                            Up => {
+                                self.previous(&status_items);
+                            }
+                            Esc => {
+                                App::change_view(self, ViewMode::ViewTasks);
+                            }
+                            _ => {}
+                        },
+                        ViewMode::AddTask => match key.code {
+                            Enter => {
+                                Task::create(self, &mut items, input.value());
+
+                                App::change_view(self, ViewMode::ViewTasks);
+                            }
+                            Esc => {
+                                App::change_view(self, ViewMode::ViewTasks);
+                            }
+                            _ => {
+                                input.handle_event(&Event::Key(key));
+                            }
+                        },
+                        ViewMode::DeleteTask => match key.code {
+                            Char('y') => {
+                                Task::delete(self, &mut items);
+                                self.selected_task_index.select_previous();
+
+                                App::change_view(self, ViewMode::ViewTasks);
+                            }
+                            Char('n') => {
+                                App::change_view(self, ViewMode::ViewTasks);
+                            }
+                            _ => {}
+                        },
+                    }
                 }
             }
         }
