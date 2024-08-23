@@ -45,6 +45,14 @@ from [crates.io](https://crates.io/crates/basilk) using [`cargo`](https://doc.ru
 cargo install basilk
 ```
 
+### AUR
+
+from the [AUR](https://aur.archlinux.org/packages/basilk) with using an [AUR helper](https://wiki.archlinux.org/title/AUR_helpers).
+
+```sh
+paru -S basilk
+```
+
 ### Build from source
 
 1. Clone the repository
