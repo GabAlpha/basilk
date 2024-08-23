@@ -109,7 +109,7 @@ impl App {
                     use KeyCode::*;
                     match self.view_mode {
                         ViewMode::ViewProjects => match key.code {
-                            Enter | Right => {
+                            Enter | Right | Char('l') => {
                                 if items.is_empty() {
                                     continue;
                                 }
@@ -142,10 +142,10 @@ impl App {
 
                                 App::change_view(self, ViewMode::DeleteProject);
                             }
-                            Down => {
+                            Down | Char('j') => {
                                 self.next(&items);
                             }
-                            Up => {
+                            Up | Char('k') => {
                                 self.previous(&items);
                             }
                             Char('q') => {
@@ -198,7 +198,7 @@ impl App {
                         },
 
                         ViewMode::ViewTasks => match key.code {
-                            Esc | Left => {
+                            Esc | Left | Char('h') => {
                                 Project::load_items(self, &mut items);
 
                                 App::change_view(self, ViewMode::ViewProjects);
@@ -240,10 +240,10 @@ impl App {
 
                                 App::change_view(self, ViewMode::DeleteTask);
                             }
-                            Down => {
+                            Down | Char('j') => {
                                 self.next(&items);
                             }
-                            Up => {
+                            Up | Char('k') => {
                                 self.previous(&items);
                             }
                             Char('q') => {
@@ -279,10 +279,10 @@ impl App {
                                 self.selected_status_task_index.select(Some(0));
                                 App::change_view(self, ViewMode::ViewTasks);
                             }
-                            Down => {
+                            Down | Char('j') => {
                                 self.next(&status_items);
                             }
-                            Up => {
+                            Up | Char('k') => {
                                 self.previous(&status_items);
                             }
                             Esc => {
