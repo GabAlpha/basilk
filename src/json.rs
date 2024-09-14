@@ -34,7 +34,7 @@ impl Json {
         return path;
     }
 
-    pub fn check() -> Result<(), Box<dyn Error>> {
+    pub fn check() -> Result<bool, Box<dyn Error>> {
         fs::create_dir_all(Json::get_dir_path())?;
 
         // Create the state to save the json version
@@ -57,7 +57,7 @@ impl Json {
             json_version_from_file = vec![last_json_version];
             version_state.push_str(json_version_from_file[0]);
 
-            return Ok(());
+            return Ok(false);
         }
 
         // Save into the internal state the last json version
@@ -69,14 +69,14 @@ impl Json {
         let json = from_str::<Vec<Value>>(&json_raw).unwrap();
 
         if json.is_empty() {
-            return Ok(());
+            return Ok(false);
         }
 
         // Load all migrations
         let migrations = Migration::get_migrations(json_version_from_file[0], json);
 
         if migrations.is_empty() {
-            return Ok(());
+            return Ok(false);
         }
 
         // Loop thru all migrations and apply them!
@@ -94,7 +94,7 @@ impl Json {
             version_state.push_str(&version)
         }
 
-        Ok(())
+        Ok(true)
     }
 
     pub fn read() -> Vec<Project> {

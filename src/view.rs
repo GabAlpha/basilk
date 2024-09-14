@@ -1,8 +1,8 @@
 use ratatui::{
-    layout::Rect,
+    layout::{Alignment, Rect},
     style::{Modifier, Style},
-    text::Line,
-    widgets::{Block, Clear, HighlightSpacing, List, ListItem},
+    text::{Line, Text},
+    widgets::{Block, Clear, HighlightSpacing, List, ListItem, Paragraph},
     Frame,
 };
 use tui_input::Input;
@@ -12,15 +12,26 @@ use crate::{project::Project, task::Task, ui::Ui, util::Util, App, ViewMode};
 pub struct View {}
 
 impl View {
-    pub fn show_new_modal(f: &mut Frame, area: Rect, input: &Input) {
-        Ui::create_input("New", f, area, input)
+    pub fn show_new_item_modal(f: &mut Frame, area: Rect, input: &Input) {
+        Ui::create_input_modal("New", f, area, input)
     }
 
-    pub fn show_rename_modal(f: &mut Frame, area: Rect, input: &Input) {
-        Ui::create_input("Rename", f, area, input)
+    pub fn show_migration_info_modal(f: &mut Frame, area: Rect) {
+        let widget = Paragraph::new(Text::from(vec![
+            Line::raw("New migrations were applied!"),
+            Line::raw("Check the changelog"),
+        ]))
+        .alignment(Alignment::Center)
+        .block(Block::bordered());
+
+        Ui::create_modal(f, 30, 4, area, widget)
     }
 
-    pub fn show_delete_modal(app: &mut App, f: &mut Frame, area: Rect) {
+    pub fn show_rename_item_modal(f: &mut Frame, area: Rect, input: &Input) {
+        Ui::create_input_modal("Rename", f, area, input)
+    }
+
+    pub fn show_delete_item_modal(app: &mut App, f: &mut Frame, area: Rect) {
         let title = match app.view_mode {
             ViewMode::DeleteTask => &Task::get_current(app).title,
             ViewMode::DeleteProject => &Project::get_current(app).title,
@@ -96,6 +107,7 @@ impl View {
             ViewMode::ChangeStatusTask => "<Up/Down k/j> next/prev - <Enter> confirm - <Esc> cancel",
             ViewMode::AddTask => "<Enter> confirm - <Esc> cancel",
             ViewMode::DeleteTask => "<y> confirm - <n> cancel",
+            ViewMode::InfoMigration => ""
         };
 
         f.render_widget(

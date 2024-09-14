@@ -41,6 +41,8 @@ pub enum ViewMode {
     ChangeStatusTask,
     AddTask,
     DeleteTask,
+
+    InfoMigration,
 }
 
 pub struct App {
@@ -70,10 +72,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let terminal = init_terminal()?;
 
     // Check the version of the json file
-    Json::check()?;
+    let were_applied_migrations = Json::check()?;
 
     // create app and run it
-    App::setup().run(terminal)?;
+    App::setup().run(terminal, were_applied_migrations)?;
 
     restore_terminal()?;
 
@@ -91,7 +93,11 @@ impl App {
         }
     }
 
-    fn run(&mut self, mut terminal: Terminal<impl Backend>) -> io::Result<()> {
+    fn run(
+        &mut self,
+        mut terminal: Terminal<impl Backend>,
+        were_applied_migrations: bool,
+    ) -> io::Result<()> {
         let mut input = Input::default();
 
         let mut items: Vec<ListItem> = vec![];
@@ -99,6 +105,10 @@ impl App {
 
         let mut status_items: Vec<ListItem> = vec![];
         Task::load_statues_items(&mut status_items);
+
+        if were_applied_migrations {
+            self.view_mode = ViewMode::InfoMigration
+        }
 
         loop {
             terminal.draw(|f| self.render(f, f.size(), &input, &items, &status_items))?;
@@ -315,6 +325,12 @@ impl App {
                             }
                             _ => {}
                         },
+
+                        ViewMode::InfoMigration => match key.code {
+                            _ => {
+                                App::change_view(self, ViewMode::ViewProjects);
+                            }
+                        },
                     }
                 }
             }
@@ -338,16 +354,20 @@ impl App {
 
         let [header_area, rest_area, footer_area] = vertical.areas(area);
 
+        if self.view_mode == ViewMode::InfoMigration {
+            View::show_migration_info_modal(f, area);
+        }
+
         if self.view_mode == ViewMode::AddTask || self.view_mode == ViewMode::AddProject {
-            View::show_new_modal(f, area, input)
+            View::show_new_item_modal(f, area, input)
         }
 
         if self.view_mode == ViewMode::RenameTask || self.view_mode == ViewMode::RenameProject {
-            View::show_rename_modal(f, area, input)
+            View::show_rename_item_modal(f, area, input)
         }
 
         if self.view_mode == ViewMode::DeleteTask || self.view_mode == ViewMode::DeleteProject {
-            View::show_delete_modal(self, f, area)
+            View::show_delete_item_modal(self, f, area)
         }
 
         if self.view_mode == ViewMode::ChangeStatusTask {
@@ -406,6 +426,8 @@ impl App {
             ViewMode::ChangeStatusTask => return &mut self.selected_status_task_index,
             ViewMode::AddTask => return &mut self.selected_task_index,
             ViewMode::DeleteTask => return &mut self.selected_task_index,
+
+            ViewMode::InfoMigration => return &mut self.selected_project_index,
         };
     }
 

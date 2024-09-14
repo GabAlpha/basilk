@@ -1,7 +1,7 @@
 use ratatui::{
     layout::{Alignment, Constraint, Layout, Rect},
     text::{Line, Text},
-    widgets::{Block, Borders, Clear, Paragraph},
+    widgets::{Block, Borders, Clear, Paragraph, Widget},
     Frame,
 };
 use tui_input::Input;
@@ -25,7 +25,19 @@ impl Ui {
         .split(popup_layout[1])[1]
     }
 
-    pub fn create_input(title: &str, f: &mut Frame, area: Rect, input: &Input) {
+    pub fn create_modal<W: Widget>(
+        f: &mut Frame,
+        percent_x: u16,
+        percent_y: u16,
+        area: Rect,
+        widget: W,
+    ) {
+        let area = Ui::create_rect_area(percent_x, percent_y, area);
+        f.render_widget(Clear, area); //this clears out the background
+        f.render_widget(widget, area);
+    }
+
+    pub fn create_input_modal(title: &str, f: &mut Frame, area: Rect, input: &Input) {
         let area = Ui::create_rect_area(50, 3, area);
 
         let width = area.width.max(3) - 3;

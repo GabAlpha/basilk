@@ -100,7 +100,7 @@ impl Task {
         Task::load_items(app, items)
     }
 
-    pub fn get_all(app: &App) -> &Vec<Task> {
+    pub fn _get_all(app: &App) -> &Vec<Task> {
         return &app.projects[app.selected_project_index.selected().unwrap()].tasks;
     }
 
