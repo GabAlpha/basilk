@@ -1,3 +1,5 @@
+use std::u8;
+
 use ratatui::{
     style::{Color, Modifier, Style},
     text::{Line, Span},
@@ -11,6 +13,8 @@ use crate::{json::Json, App};
 pub struct Task {
     pub title: String,
     pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_index: Option<u8>,
 }
 
 pub const TASK_STATUS_DONE: &str = "Done";
@@ -52,10 +56,7 @@ impl Task {
         let last_task_title_selected = tasks
             .clone()
             .get(app.selected_task_index.selected().unwrap_or(0))
-            .unwrap_or(&Task {
-                title: "".to_string(),
-                status: "".to_string(),
-            })
+            .unwrap()
             .clone()
             .title;
 
@@ -64,6 +65,8 @@ impl Task {
                 .into_iter()
                 .position(|o| o == t.status)
         });
+
+        tasks.sort_by_key(|t| t.custom_index.unwrap_or(u8::MAX));
 
         let new_index = tasks
             .into_iter()
@@ -117,6 +120,7 @@ impl Task {
         let new_task = Task {
             title: value.to_string(),
             status: TASK_STATUS_UP_NEXT.to_string(),
+            custom_index: None,
         };
 
         let mut internal_projects = app.projects.clone();
