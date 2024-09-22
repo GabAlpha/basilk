@@ -25,7 +25,7 @@ mod view;
 
 use json::Json;
 use project::Project;
-use task::{Task, TASK_STATUSES};
+use task::{Task, TASK_PRIORITIES, TASK_STATUSES};
 use view::View;
 
 #[derive(Default, PartialEq, Debug)]
@@ -39,6 +39,7 @@ pub enum ViewMode {
     ViewTasks,
     RenameTask,
     ChangeStatusTask,
+    ChangePriorityTask,
     AddTask,
     DeleteTask,
 
@@ -46,9 +47,11 @@ pub enum ViewMode {
 }
 
 pub struct App {
+    // TODO: Better list state mgmt
     selected_project_index: ListState,
     selected_task_index: ListState,
     selected_status_task_index: ListState,
+    selected_priority_task_index: ListState,
     view_mode: ViewMode,
     projects: Vec<Project>,
 }
@@ -88,6 +91,7 @@ impl App {
             selected_project_index: ListState::default().with_selected(Some(0)),
             selected_task_index: ListState::default().with_selected(Some(0)),
             selected_status_task_index: ListState::default().with_selected(Some(0)),
+            selected_priority_task_index: ListState::default().with_selected(Some(0)),
             view_mode: ViewMode::default(),
             projects: Json::read(),
         }
@@ -106,12 +110,17 @@ impl App {
         let mut status_items: Vec<ListItem> = vec![];
         Task::load_statues_items(&mut status_items);
 
+        let mut priority_items: Vec<ListItem> = vec![];
+        Task::load_priority_items(&mut priority_items);
+
         if were_applied_migrations {
             self.view_mode = ViewMode::InfoMigration
         }
 
         loop {
-            terminal.draw(|f| self.render(f, f.size(), &input, &items, &status_items))?;
+            terminal.draw(|f| {
+                self.render(f, f.size(), &input, &items, &status_items, &priority_items)
+            })?;
 
             if let Event::Key(key) = event::read()? {
                 // Capture only the "Press" event to prevent double input on Windows
@@ -227,6 +236,20 @@ impl App {
 
                                 App::change_view(self, ViewMode::ChangeStatusTask);
                             }
+                            Char('p') => {
+                                if items.is_empty() {
+                                    continue;
+                                }
+
+                                let index = TASK_PRIORITIES
+                                    .into_iter()
+                                    .position(|t| t == Task::get_current(self).priority)
+                                    .unwrap();
+
+                                self.selected_priority_task_index.select(Some(index));
+
+                                App::change_view(self, ViewMode::ChangePriorityTask);
+                            }
                             Char('r') => {
                                 if items.is_empty() {
                                     continue;
@@ -289,11 +312,35 @@ impl App {
                                 self.selected_status_task_index.select(Some(0));
                                 App::change_view(self, ViewMode::ViewTasks);
                             }
+
                             Down | Char('j') => {
                                 self.next(&status_items);
                             }
                             Up | Char('k') => {
                                 self.previous(&status_items);
+                            }
+                            Esc => {
+                                App::change_view(self, ViewMode::ViewTasks);
+                            }
+                            _ => {}
+                        },
+                        ViewMode::ChangePriorityTask => match key.code {
+                            Enter => {
+                                Task::change_priority(
+                                    self,
+                                    &mut items,
+                                    TASK_PRIORITIES
+                                        [self.selected_priority_task_index.selected().unwrap()],
+                                );
+
+                                self.selected_priority_task_index.select(Some(0));
+                                App::change_view(self, ViewMode::ViewTasks);
+                            }
+                            Down | Char('j') => {
+                                self.next(&priority_items);
+                            }
+                            Up | Char('k') => {
+                                self.previous(&priority_items);
                             }
                             Esc => {
                                 App::change_view(self, ViewMode::ViewTasks);
@@ -344,6 +391,7 @@ impl App {
         input: &Input,
         items: &Vec<ListItem>,
         status_items: &Vec<ListItem>,
+        priority_items: &Vec<ListItem>,
     ) {
         // Create a space for header, todo list and the footer.
         let vertical = Layout::vertical([
@@ -372,6 +420,10 @@ impl App {
 
         if self.view_mode == ViewMode::ChangeStatusTask {
             View::show_select_task_status_modal(self, status_items, f, area)
+        }
+
+        if self.view_mode == ViewMode::ChangePriorityTask {
+            View::show_select_task_priority_modal(self, priority_items, f, area)
         }
 
         f.render_widget(
@@ -424,6 +476,7 @@ impl App {
             ViewMode::ViewTasks => return &mut self.selected_task_index,
             ViewMode::RenameTask => return &mut self.selected_task_index,
             ViewMode::ChangeStatusTask => return &mut self.selected_status_task_index,
+            ViewMode::ChangePriorityTask => return &mut self.selected_priority_task_index,
             ViewMode::AddTask => return &mut self.selected_task_index,
             ViewMode::DeleteTask => return &mut self.selected_task_index,
 

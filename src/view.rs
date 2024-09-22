@@ -65,6 +65,24 @@ impl View {
         f.render_stateful_widget(task_status_list_widget, area, app.use_state())
     }
 
+    pub fn show_select_task_priority_modal(
+        app: &mut App,
+        priority_items: &Vec<ListItem>,
+        f: &mut Frame,
+        area: Rect,
+    ) {
+        let area = Ui::create_rect_area(10, 6, area);
+
+        let task_status_list_widget = List::new(priority_items.clone())
+            .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+            .highlight_symbol("> ")
+            .highlight_spacing(HighlightSpacing::Always)
+            .block(Block::bordered().title("Priority"));
+
+        f.render_widget(Clear, area);
+        f.render_stateful_widget(task_status_list_widget, area, app.use_state())
+    }
+
     pub fn show_items(app: &mut App, items: &Vec<ListItem>, f: &mut Frame, area: Rect) {
         let block: Block = match app.view_mode {
             ViewMode::ViewProjects
@@ -84,10 +102,12 @@ impl View {
             .highlight_spacing(HighlightSpacing::Always)
             .block(block);
 
-        if app.view_mode != ViewMode::ChangeStatusTask {
-            f.render_stateful_widget(items, area, app.use_state());
-        } else {
+        if app.view_mode == ViewMode::ChangeStatusTask
+            || app.view_mode == ViewMode::ChangePriorityTask
+        {
             f.render_widget(items, area)
+        } else {
+            f.render_stateful_widget(items, area, app.use_state());
         }
     }
 
@@ -105,6 +125,7 @@ impl View {
             }
             ViewMode::RenameTask => "<Enter> confirm - <Esc> cancel",
             ViewMode::ChangeStatusTask => "<Up/Down k/j> next/prev - <Enter> confirm - <Esc> cancel",
+            ViewMode::ChangePriorityTask => "<Up/Down k/j> next/prev - <Enter> confirm - <Esc> cancel",
             ViewMode::AddTask => "<Enter> confirm - <Esc> cancel",
             ViewMode::DeleteTask => "<y> confirm - <n> cancel",
             ViewMode::InfoMigration => ""
