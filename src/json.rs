@@ -19,7 +19,7 @@ static DIR_CONFIG_NAME: &str = env!("CARGO_PKG_NAME");
 static VERSION: Mutex<String> = Mutex::new(String::new());
 
 impl Json {
-    fn get_dir_path() -> PathBuf {
+    pub fn get_dir_path() -> PathBuf {
         let mut path = dirs::config_dir().unwrap();
         path.push(DIR_CONFIG_NAME);
 

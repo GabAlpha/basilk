@@ -15,6 +15,7 @@ use ratatui::{
 };
 use tui_input::{backend::crossterm::EventHandler, Input};
 
+mod config;
 mod json;
 mod migration;
 mod project;
@@ -23,6 +24,7 @@ mod ui;
 mod util;
 mod view;
 
+use config::{Config, ConfigToml};
 use json::Json;
 use project::Project;
 use task::{Task, TASK_PRIORITIES, TASK_STATUSES};
@@ -54,6 +56,7 @@ pub struct App {
     selected_priority_task_index: ListState,
     view_mode: ViewMode,
     projects: Vec<Project>,
+    config: ConfigToml,
 }
 
 fn init_terminal() -> Result<Terminal<impl Backend>, Box<dyn Error>> {
@@ -94,6 +97,7 @@ impl App {
             selected_priority_task_index: ListState::default().with_selected(Some(0)),
             view_mode: ViewMode::default(),
             projects: Json::read(),
+            config: Config::read(),
         }
     }
 
@@ -393,14 +397,24 @@ impl App {
         status_items: &Vec<ListItem>,
         priority_items: &Vec<ListItem>,
     ) {
-        // Create a space for header, todo list and the footer.
-        let vertical = Layout::vertical([
-            Constraint::Percentage(2),
-            Constraint::Percentage(93),
-            Constraint::Percentage(5),
-        ]);
+        let layout = Layout::vertical(if self.config.ui.show_help {
+            [
+                Constraint::Percentage(2),
+                Constraint::Percentage(93),
+                // Space for the footer helper
+                Constraint::Percentage(5),
+            ]
+        } else {
+            [
+                Constraint::Percentage(2),
+                // Expand the main area
+                Constraint::Percentage(98),
+                // Remove the footer help area
+                Constraint::Percentage(0),
+            ]
+        });
 
-        let [header_area, rest_area, footer_area] = vertical.areas(area);
+        let [header_area, rest_area, footer_area] = layout.areas(area);
 
         if self.view_mode == ViewMode::InfoMigration {
             View::show_migration_info_modal(f, area);
@@ -433,7 +447,9 @@ impl App {
 
         View::show_items(self, items, f, rest_area);
 
-        View::show_footer_helper(self, f, footer_area)
+        if self.config.ui.show_help {
+            View::show_footer_helper(self, f, footer_area)
+        }
     }
 
     fn next(&mut self, items: &Vec<ListItem>) -> () {
