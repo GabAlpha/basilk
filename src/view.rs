@@ -2,7 +2,7 @@ use ratatui::{
     layout::{Alignment, Rect},
     style::{Modifier, Style},
     text::{Line, Text},
-    widgets::{Block, Clear, HighlightSpacing, List, ListItem, Paragraph},
+    widgets::{Block, Clear, HighlightSpacing, List, ListItem, Paragraph, Wrap},
     Frame,
 };
 use tui_input::Input;
@@ -132,7 +132,9 @@ impl View {
         };
 
         f.render_widget(
-            Block::new().title_bottom(Line::from(help_string).centered()),
+            Paragraph::new(help_string)
+                .wrap(Wrap { trim: true })
+                .alignment(Alignment::Center),
             area,
         );
     }
