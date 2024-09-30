@@ -2,6 +2,7 @@ use std::{
     fs::{self, File},
     io::Write,
     path::PathBuf,
+    process::exit,
 };
 
 use serde::{Deserialize, Serialize};
@@ -52,7 +53,18 @@ impl Config {
             }
         };
 
-        let data: ConfigToml = toml::from_str(&config_raw).unwrap();
+        let data: ConfigToml = match toml::from_str(&config_raw) {
+            Ok(c) => c,
+            // If config.toml is not valid, throw a error message
+            Err(_) => {
+                eprint!(
+                    "{} - ERROR: The configuration file is invalid. Please check the wiki for correct formatting or delete the file",
+                    env!("CARGO_PKG_NAME")
+                );
+                exit(1)
+            }
+        };
+
         return data;
     }
 }
