@@ -4,6 +4,7 @@ use std::{
     io::{self, stdout},
 };
 
+use cli::Cli;
 use ratatui::{
     crossterm::{
         event::{self, Event, KeyCode, KeyEventKind},
@@ -15,6 +16,7 @@ use ratatui::{
 };
 use tui_input::{backend::crossterm::EventHandler, Input};
 
+mod cli;
 mod config;
 mod json;
 mod migration;
@@ -74,6 +76,8 @@ fn restore_terminal() -> Result<(), Box<dyn Error>> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    Cli::read();
+
     // setup terminal
     let terminal = init_terminal()?;
 
