@@ -53,6 +53,14 @@ from the [AUR](https://aur.archlinux.org/packages/basilk) with using an [AUR hel
 paru -S basilk
 ```
 
+### Homebrew
+from a [homebrew tap](https://docs.brew.sh/Taps) using [`brew`](https://brew.sh/)
+
+```sh
+brew tap GabAlpha/tap
+brew install basilk
+```
+
 ### Build from source
 
 1. Clone the repository
