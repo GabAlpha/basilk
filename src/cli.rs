@@ -10,7 +10,7 @@ impl Cli {
         match args.next() {
             Some(arg) => {
                 if arg == "--version" {
-                    print!(env!("CARGO_PKG_VERSION"));
+                    println!(env!("CARGO_PKG_VERSION"));
                     exit(0)
                 }
             }
