@@ -418,8 +418,18 @@ impl App {
             ]
         });
 
-        let [header_area, rest_area, footer_area] = layout.areas(area);
+        let [header_area, main_area, footer_area] = layout.areas(area);
 
+        // Header
+        f.render_widget(
+            Paragraph::new(format!("::{}::", env!("CARGO_PKG_NAME"))).centered(),
+            header_area,
+        );
+
+        // Main view
+        View::show_items(self, items, f, main_area);
+
+        // Other views
         if self.view_mode == ViewMode::InfoMigration {
             View::show_migration_info_modal(f, area);
         }
@@ -443,13 +453,6 @@ impl App {
         if self.view_mode == ViewMode::ChangePriorityTask {
             View::show_select_task_priority_modal(self, priority_items, f, area)
         }
-
-        f.render_widget(
-            Paragraph::new(format!("::{}::", env!("CARGO_PKG_NAME"))).centered(),
-            header_area,
-        );
-
-        View::show_items(self, items, f, rest_area);
 
         if self.config.ui.show_help {
             View::show_footer_helper(self, f, footer_area)
