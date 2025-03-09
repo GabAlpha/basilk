@@ -169,10 +169,10 @@ impl App {
 
                                 App::change_view(self, ViewMode::DeleteProject);
                             }
-                            Down | Char('j') => {
+                            Down | Tab | Char('j') => {
                                 self.next(&items);
                             }
-                            Up | Char('k') => {
+                            Up | BackTab | Char('k') => {
                                 self.previous(&items);
                             }
                             Char('q') => {
@@ -281,10 +281,10 @@ impl App {
 
                                 App::change_view(self, ViewMode::DeleteTask);
                             }
-                            Down | Char('j') => {
+                            Down | Tab | Char('j') => {
                                 self.next(&items);
                             }
-                            Up | Char('k') => {
+                            Up | BackTab | Char('k') => {
                                 self.previous(&items);
                             }
                             Char('q') => {
@@ -321,10 +321,10 @@ impl App {
                                 App::change_view(self, ViewMode::ViewTasks);
                             }
 
-                            Down | Char('j') => {
+                            Down | BackTab | Char('j') => {
                                 self.next(&status_items);
                             }
-                            Up | Char('k') => {
+                            Up | Tab | Char('k') => {
                                 self.previous(&status_items);
                             }
                             Esc => {
@@ -344,10 +344,10 @@ impl App {
                                 self.selected_priority_task_index.select(Some(0));
                                 App::change_view(self, ViewMode::ViewTasks);
                             }
-                            Down | Char('j') => {
+                            Down | BackTab | Char('j') => {
                                 self.next(&priority_items);
                             }
-                            Up | Char('k') => {
+                            Up | Tab | Char('k') => {
                                 self.previous(&priority_items);
                             }
                             Esc => {
