@@ -174,10 +174,17 @@ impl Task {
 
     pub fn change_status(app: &mut App, items: &mut Vec<ListItem>, value: &str) {
         let mut internal_projects = app.projects.clone();
+        let status = value.to_string();
 
         internal_projects[app.selected_project_index.selected().unwrap()].tasks
             [app.selected_task_index.selected().unwrap()]
-        .status = value.to_string();
+        .status = status.clone();
+
+        if status == TASK_STATUS_DONE {
+            internal_projects[app.selected_project_index.selected().unwrap()].tasks
+                [app.selected_task_index.selected().unwrap()]
+            .priority = 0
+        }
 
         Json::write(internal_projects);
         Task::reload(app, items)
