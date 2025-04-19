@@ -1,3 +1,4 @@
+use crate::globals::DATA_FILE;
 use std::{env, process::exit};
 
 pub struct Cli;
@@ -12,6 +13,10 @@ impl Cli {
                 if arg == "--version" {
                     print!(env!("CARGO_PKG_VERSION"));
                     exit(0)
+                } else {
+                    // get data file name
+                    let mut data_file_name = DATA_FILE.lock().unwrap();
+                    *data_file_name = Some(arg);
                 }
             }
             None => (),
