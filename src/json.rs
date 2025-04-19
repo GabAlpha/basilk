@@ -9,6 +9,7 @@ use std::{
 use serde_json::{from_str, to_string, Value};
 
 use crate::{
+    globals::DATA_FILE,
     migration::{Migration, JSON_VERSIONS},
     project::Project,
 };
@@ -20,6 +21,12 @@ static VERSION: Mutex<String> = Mutex::new(String::new());
 
 impl Json {
     pub fn get_dir_path() -> PathBuf {
+        // if it is a file in a project, push the correct directory
+        if DATA_FILE.lock().unwrap().is_some() {
+            let mut path = PathBuf::new();
+            path.push("./");
+            return path;
+        }
         let mut path = dirs::config_dir().unwrap();
         path.push(DIR_CONFIG_NAME);
 
@@ -29,7 +36,11 @@ impl Json {
     fn get_json_path(version: String) -> PathBuf {
         let mut path = PathBuf::new();
         path.push(Json::get_dir_path().as_path());
-        path.push(format!("{version}.json"));
+        if let Some(data_file) = DATA_FILE.lock().unwrap().clone() {
+            path.push(format!("{data_file}.{version}.json"));
+        } else {
+            path.push(format!("{version}.json"));
+        }
 
         return path;
     }
