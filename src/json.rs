@@ -21,7 +21,7 @@ static VERSION: Mutex<String> = Mutex::new(String::new());
 
 impl Json {
     pub fn get_dir_path() -> PathBuf {
-        // if it is a file in a project, push the correct directory
+        // if it is a file in a project, push the current directory
         if DATA_FILE.lock().unwrap().is_some() {
             let mut path = PathBuf::new();
             path.push("./");
