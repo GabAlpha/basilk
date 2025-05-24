@@ -61,6 +61,13 @@ brew tap GabAlpha/tap
 brew install basilk
 ```
 
+### X-CMD
+from a [x install](https://x-cmd.com/install/basilk) using [x-cmd](https://x-cmd.com)
+
+```sh
+x install basilk
+```
+
 ### Build from source
 
 1. Clone the repository
