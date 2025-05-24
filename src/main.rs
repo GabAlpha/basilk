@@ -18,6 +18,7 @@ use tui_input::{backend::crossterm::EventHandler, Input};
 
 mod cli;
 mod config;
+mod globals;
 mod json;
 mod migration;
 mod project;

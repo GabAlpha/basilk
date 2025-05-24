@@ -88,6 +88,13 @@ basilk
 ```
 All available commands are displayed inside
 
+### Use specific data file
+Run
+```sh
+basilk [file-name]
+```
+to use a specific data file in current directory. if the file does not exist, create `[file-name].[json-version].json`.
+
 ## Contributing
 > [!NOTE]  
 > This project is now in beta version and is expected to have bugs
